@@ -20,26 +20,25 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
-// NetboxIPPoolSpec defines the desired state of NetboxIPPool
+// NetboxIPPoolSpec defines the desired state of NetboxIPPool.
 type NetboxIPPoolSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of NetboxIPPool. Edit netboxippool_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
 }
 
-// NetboxIPPoolStatus defines the observed state of NetboxIPPool
+// NetboxIPPoolStatus defines the observed state of NetboxIPPool.
 type NetboxIPPoolStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// Addresses reports the count of total, free, and used IPs in the pool.
+	// +optional
+	Addresses *NetboxIPPoolStatusIPAddresses `json:"ipAddresses,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:storageversion
+// +kubebuilder:resource:categories=cluster-api
+// +kubebuilder:printcolumn:name="Addresses",type="string",JSONPath=".spec.addresses",description="List of addresses, to allocate from"
+// +kubebuilder:printcolumn:name="Total",type="integer",JSONPath=".status.ipAddresses.total",description="Count of IPs configured for the pool"
+// +kubebuilder:printcolumn:name="Free",type="integer",JSONPath=".status.ipAddresses.free",description="Count of unallocated IPs in the pool"
+// +kubebuilder:printcolumn:name="Used",type="integer",JSONPath=".status.ipAddresses.used",description="Count of allocated IPs in the pool"
 
 // NetboxIPPool is the Schema for the netboxippools API
 type NetboxIPPool struct {
@@ -61,4 +60,7 @@ type NetboxIPPoolList struct {
 
 func init() {
 	SchemeBuilder.Register(&NetboxIPPool{}, &NetboxIPPoolList{})
+}
+
+type NetboxIPPoolStatusIPAddresses struct {
 }

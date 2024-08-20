@@ -18,11 +18,17 @@ package controller
 
 import (
 	"context"
+	"github.com/pkg/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	kerrors "k8s.io/apimachinery/pkg/util/errors"
+	"k8s.io/klog/v2"
 	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	ctrlutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -33,6 +39,7 @@ import (
 
 const (
 	netBoxIPPoolKind = "NetboxIPPool"
+	PoolFinalizer    = "netboxippool.ipam.cluster.x-k8s.io"
 )
 
 // NetboxIPPoolReconciler reconciles a NetboxIPPool object
@@ -41,7 +48,7 @@ type NetboxIPPoolReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-func AddNetboxIPPoolReconciler(ctx context.Context, mgr manager.Manager) error {
+func AddNetboxIPPoolReconciler(mgr manager.Manager) error {
 	reconciler := &NetboxIPPoolReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
@@ -79,10 +86,68 @@ func (r *NetboxIPPoolReconciler) ipAddressToNetboxIPPool(_ context.Context, clie
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-func (r *NetboxIPPoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+func (r *NetboxIPPoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
+	logger := log.FromContext(ctx)
+	logger.Info("Reconciling NetboxIPPool")
 
-	// TODO(user): your logic here
+	pool := &ipamv1alpha1.NetboxIPPool{}
+	if err := r.Client.Get(ctx, req.NamespacedName, pool); err != nil {
+		if !apierrors.IsNotFound(err) {
+			return ctrl.Result{}, errors.Wrap(err, "could not fetch NetboxIPPool")
+		}
+		return ctrl.Result{}, nil
+	}
 
-	return ctrl.Result{}, nil
+	patchHelper, err := patch.NewHelper(pool, r.Client)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	defer func() {
+		if err := patchHelper.Patch(ctx, pool); err != nil {
+			reterr = kerrors.NewAggregate([]error{reterr, err})
+		}
+	}()
+
+	addressesInUse, err := r.getAddressesInUse(ctx, pool)
+	if err != nil {
+		return ctrl.Result{}, errors.Wrap(err, "failed to list addresses")
+	}
+
+	// Handle deleted pools
+	if !pool.DeletionTimestamp.IsZero() {
+		return r.reconcileDelete(ctx, pool, addressesInUse)
+	}
+
+	// If the Pool doesn't have our finalizer, add it.
+	// Requeue immediately after adding finalizer to avoid the race condition between init and delete
+	if !ctrlutil.ContainsFinalizer(pool, PoolFinalizer) {
+		ctrlutil.AddFinalizer(pool, PoolFinalizer)
+		return reconcile.Result{}, nil
+	}
+
+	// Handle non-deleted clusters
+	return r.reconcileNormal(ctx, pool, addressesInUse)
+}
+
+func (r *NetboxIPPoolReconciler) reconcileDelete(ctx context.Context, pool *ipamv1alpha1.NetboxIPPool, addressesInUse []ipamv1.IPAddress) (reconcile.Result, error) {
+	logger := ctrl.LoggerFrom(ctx)
+
+	if len(addressesInUse) > 0 {
+		logger.Info("addresses are still in use", "Pool", klog.KObj(pool))
+		return ctrl.Result{}, nil
+	}
+
+	// Pool is deleted so remove the finalizer.
+	ctrlutil.RemoveFinalizer(pool, PoolFinalizer)
+
+	return reconcile.Result{}, nil
+}
+
+func (r *NetboxIPPoolReconciler) reconcileNormal(ctx context.Context, pool *ipamv1alpha1.NetboxIPPool, addressesInUse []ipamv1.IPAddress) (reconcile.Result, error) {
+	return reconcile.Result{}, nil
+}
+
+func (r *NetboxIPPoolReconciler) getAddressesInUse(ctx context.Context, pool *ipamv1alpha1.NetboxIPPool) ([]ipamv1.IPAddress, error) {
+	return []ipamv1.IPAddress{}, nil
 }

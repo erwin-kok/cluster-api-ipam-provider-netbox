@@ -8,13 +8,32 @@ metadata:
 spec:
   group: ipam.cluster.x-k8s.io
   names:
+    categories:
+    - cluster-api
     kind: NetboxIPPool
     listKind: NetboxIPPoolList
     plural: netboxippools
     singular: netboxippool
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - description: List of addresses, to allocate from
+      jsonPath: .spec.addresses
+      name: Addresses
+      type: string
+    - description: Count of IPs configured for the pool
+      jsonPath: .status.ipAddresses.total
+      name: Total
+      type: integer
+    - description: Count of unallocated IPs in the pool
+      jsonPath: .status.ipAddresses.free
+      name: Free
+      type: integer
+    - description: Count of allocated IPs in the pool
+      jsonPath: .status.ipAddresses.used
+      name: Used
+      type: integer
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: NetboxIPPool is the Schema for the netboxippools API
@@ -37,15 +56,15 @@ spec:
           metadata:
             type: object
           spec:
-            description: NetboxIPPoolSpec defines the desired state of NetboxIPPool
-            properties:
-              foo:
-                description: Foo is an example field of NetboxIPPool. Edit netboxippool_types.go
-                  to remove/update
-                type: string
+            description: NetboxIPPoolSpec defines the desired state of NetboxIPPool.
             type: object
           status:
-            description: NetboxIPPoolStatus defines the observed state of NetboxIPPool
+            description: NetboxIPPoolStatus defines the observed state of NetboxIPPool.
+            properties:
+              ipAddresses:
+                description: Addresses reports the count of total, free, and used
+                  IPs in the pool.
+                type: object
             type: object
         type: object
     served: true

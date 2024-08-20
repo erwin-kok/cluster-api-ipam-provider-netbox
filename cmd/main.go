@@ -146,7 +146,7 @@ func main() {
 
 	ctx := ctrl.SetupSignalHandler()
 
-	if err := controller.AddNetboxIPPoolReconciler(ctx, mgr); err != nil {
+	if err := controller.AddNetboxIPPoolReconciler(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "NetboxIPPool")
 		os.Exit(1)
 	}
