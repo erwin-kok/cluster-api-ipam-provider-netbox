@@ -1,0 +1,109 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.15.0
+  name: netboxiprangeglobalpools.ipam.cluster.x-k8s.io
+spec:
+  group: ipam.cluster.x-k8s.io
+  names:
+    categories:
+    - cluster-api
+    kind: NetboxIPRangeGlobalPool
+    listKind: NetboxIPRangeGlobalPoolList
+    plural: netboxiprangeglobalpools
+    singular: netboxiprangeglobalpool
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - description: List of addresses, to allocate from
+      jsonPath: .spec.addresses
+      name: Addresses
+      type: string
+    - description: Count of IPs configured for the pool
+      jsonPath: .status.ipAddresses.total
+      name: Total
+      type: integer
+    - description: Count of unallocated IPs in the pool
+      jsonPath: .status.ipAddresses.free
+      name: Free
+      type: integer
+    - description: Count of allocated IPs in the pool
+      jsonPath: .status.ipAddresses.used
+      name: Used
+      type: integer
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: NetboxIPRangeGlobalPool is the Schema for the netboxiprangeglobalpools
+          API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: NetboxIPRangeGlobalPoolSpec defines the desired state of
+              NetboxIPRangeGlobalPool
+            properties:
+              endAddress:
+                description: EndAddress is the EndAddress of the IP-Range
+                type: string
+              gateway:
+                description: Gateway
+                type: string
+              startAddress:
+                description: StartAddress is the StartAddress of the IP-Range
+                type: string
+            required:
+            - endAddress
+            - startAddress
+            type: object
+          status:
+            description: NetboxIPRangeGlobalPoolStatus defines the observed state
+              of NetboxIPRangeGlobalPool
+            properties:
+              ipAddresses:
+                description: Addresses reports the count of total, free, and used
+                  IPs in the pool.
+                properties:
+                  free:
+                    description: |-
+                      Free is the count of unallocated IPs in the pool.
+                      Counts greater than int can contain will report as math.MaxInt.
+                    type: integer
+                  total:
+                    description: |-
+                      Total is the total number of IPs configured for the pool.
+                      Counts greater than int can contain will report as math.MaxInt.
+                    type: integer
+                  used:
+                    description: |-
+                      Used is the count of allocated IPs in the pool.
+                      Counts greater than int can contain will report as math.MaxInt.
+                    type: integer
+                required:
+                - free
+                - total
+                - used
+                type: object
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

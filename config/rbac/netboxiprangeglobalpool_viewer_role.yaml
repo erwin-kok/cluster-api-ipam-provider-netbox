@@ -1,16 +1,16 @@
-# permissions for end users to view netboxippools.
+# permissions for end users to view netboxiprangeglobalpools.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
     app.kubernetes.io/name: cluster-api-ipam-provider-netbox
     app.kubernetes.io/managed-by: kustomize
-  name: netboxippool-viewer-role
+  name: netboxiprangeglobalpool-viewer-role
 rules:
 - apiGroups:
   - ipam.cluster.x-k8s.io
   resources:
-  - netboxippools
+  - netboxiprangeglobalpools
   verbs:
   - get
   - list
@@ -18,6 +18,6 @@ rules:
 - apiGroups:
   - ipam.cluster.x-k8s.io
   resources:
-  - netboxippools/status
+  - netboxiprangeglobalpools/status
   verbs:
   - get

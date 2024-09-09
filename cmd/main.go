@@ -17,17 +17,21 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"flag"
+	"fmt"
 	"os"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"time"
 
-	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
-	// to ensure that exec-entrypoint and run can make use of them.
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
-
+	nb "github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/netbox"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -37,6 +41,10 @@ import (
 
 	ipamv1alpha1 "github.com/erwin-kok/cluster-api-ipam-provider-netbox/api/v1alpha1"
 	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/controller"
+	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/index"
+	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/ipam"
+	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/webhooks"
+	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/version"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -47,28 +55,70 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-
+	utilruntime.Must(ipamv1.AddToScheme(scheme))
+	utilruntime.Must(clusterv1.AddToScheme(scheme))
 	utilruntime.Must(ipamv1alpha1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
 func main() {
-	var metricsAddr string
-	var enableLeaderElection bool
-	var probeAddr string
-	var secureMetrics bool
-	var enableHTTP2 bool
-	var tlsOpts []func(*tls.Config)
+	nbclient, err := nb.NewNetBoxClient("http://localhost:8000", "b1f2db68f235158beea51b0554fc067814221c3a")
+	ctx1 := context.Background()
+	iprange, err := nbclient.GetIPRange(ctx1, "10.0.0.1/24", "")
+	if err != nil {
+		setupLog.Error(err, "unable")
+		os.Exit(1)
+	}
+
+	prefix, err := nbclient.GetPrefix(ctx1, "30.10.0.0/16", "TestVRF")
+	if err != nil {
+		setupLog.Error(err, "unable")
+		os.Exit(1)
+	}
+
+	start := time.Now()
+	_ = nbclient.GatherStatistics(ctx1, []*nb.AddressPool{prefix, iprange})
+
+	fmt.Println(prefix)
+	fmt.Println(iprange)
+
+	fmt.Printf("took %v\n", time.Since(start))
+
+	ipAddress, err := nbclient.NextAvailableAddress(ctx1)
+	if err != nil {
+		setupLog.Error(err, "unable")
+		os.Exit(1)
+	}
+
+	fmt.Println(ipAddress)
+
+	nbclient.Bla(ctx1, 1)
+
+	/********/
+
+	var (
+		metricsAddr          string
+		enableLeaderElection bool
+		probeAddr            string
+		watchNamespace       string
+		watchFilter          string
+
+		secureMetrics bool
+		tlsOpts       []func(*tls.Config)
+	)
+
 	flag.StringVar(&metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
 		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
+	flag.StringVar(&watchNamespace, "namespace", "",
+		"Namespace that the controller watches to reconcile cluster-api objects. If unspecified, the controller watches for cluster-api objects across all namespaces.")
+	flag.StringVar(&watchFilter, "watch-filter", "", "")
+
 	flag.BoolVar(&secureMetrics, "metrics-secure", true,
 		"If set, the metrics endpoint is served securely via HTTPS. Use --metrics-secure=false to use HTTP instead.")
-	flag.BoolVar(&enableHTTP2, "enable-http2", false,
-		"If set, HTTP/2 will be enabled for the metrics and webhook servers")
 	opts := zap.Options{
 		Development: true,
 	}
@@ -77,24 +127,14 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	// if the enable-http2 flag is false (the default), http/2 should be disabled
-	// due to its vulnerabilities. More specifically, disabling http/2 will
-	// prevent from being vulnerable to the HTTP/2 Stream Cancellation and
-	// Rapid Reset CVEs. For more information see:
-	// - https://github.com/advisories/GHSA-qppj-fm5r-hxr3
-	// - https://github.com/advisories/GHSA-4374-p667-p6c8
+	ctx := ctrl.SetupSignalHandler()
+
 	disableHTTP2 := func(c *tls.Config) {
 		setupLog.Info("disabling http/2")
 		c.NextProtos = []string{"http/1.1"}
 	}
 
-	if !enableHTTP2 {
-		tlsOpts = append(tlsOpts, disableHTTP2)
-	}
-
-	webhookServer := webhook.NewServer(webhook.Options{
-		TLSOpts: tlsOpts,
-	})
+	tlsOpts = append(tlsOpts, disableHTTP2)
 
 	// Metrics endpoint is enabled in 'config/default/kustomization.yaml'. The Metrics options configure the server.
 	// More info:
@@ -120,38 +160,60 @@ func main() {
 		metricsServerOptions.FilterProvider = filters.WithAuthenticationAndAuthorization
 	}
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 scheme,
-		Metrics:                metricsServerOptions,
-		WebhookServer:          webhookServer,
+	options := ctrl.Options{
+		Scheme:  scheme,
+		Metrics: metricsServerOptions,
+		WebhookServer: webhook.NewServer(webhook.Options{
+			TLSOpts: tlsOpts,
+		}),
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "fca0b12c.cluster.x-k8s.io",
-		// LeaderElectionReleaseOnCancel defines if the leader should step down voluntarily
-		// when the Manager ends. This requires the binary to immediately end when the
-		// Manager is stopped, otherwise, this setting is unsafe. Setting this significantly
-		// speeds up voluntary leader transitions as the new leader don't have to wait
-		// LeaseDuration time first.
-		//
-		// In the default scaffold provided, the program ends immediately after
-		// the manager stops, so would be fine to enable this option. However,
-		// if you are doing or is intended to do any operation such as perform cleanups
-		// after the manager stops then its usage might be unsafe.
-		// LeaderElectionReleaseOnCancel: true,
-	})
+	}
+
+	if watchNamespace != "" {
+		options.Cache = cache.Options{
+			DefaultNamespaces: map[string]cache.Config{
+				watchNamespace: {},
+			},
+		}
+	}
+
+	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), options)
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
 
-	ctx := ctrl.SetupSignalHandler()
-
-	if err := controller.AddNetboxIPPoolReconciler(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "NetboxIPPool")
+	if err = index.SetupIndexes(ctx, mgr); err != nil {
+		setupLog.Error(err, "failed to setup indexes")
 		os.Exit(1)
 	}
+
+	if err := ipam.AddIPAddressClaimReconciler(ctx, mgr, watchFilter); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "IPAddressClaim")
+		os.Exit(1)
+	}
+
+	if err := controller.AddNetboxPrefixPoolReconciler(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "NetboxPrefixPool")
+		os.Exit(1)
+	}
+	if err := controller.AddNetboxPrefixGlobalPoolReconciler(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "NetboxPrefixGlobalPool")
+		os.Exit(1)
+	}
+	if err := controller.AddNetboxIPRangePoolReconciler(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "NetboxIPRangePool")
+		os.Exit(1)
+	}
+	if err := controller.AddNetboxIPRangeGlobalPoolReconciler(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "NetboxIPRangeGlobalPool")
+		os.Exit(1)
+	}
+
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
-		if err = (&ipamv1alpha1.NetboxIPPool{}).SetupWebhookWithManager(mgr); err != nil {
+		if err = (&webhooks.NetboxIPPool{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "NetboxIPPool")
 			os.Exit(1)
 		}
@@ -167,8 +229,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	setupLog.Info("starting manager")
-
+	setupLog.Info("starting manager", "version", version.Get().String())
 	if err := mgr.Start(ctx); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)

@@ -6,23 +6,91 @@ metadata:
 webhooks:
 - admissionReviewVersions:
   - v1
+  - v1beta1
   clientConfig:
     service:
       name: webhook-service
       namespace: system
-      path: /mutate-ipam-cluster-x-k8s-io-v1alpha1-netboxippool
+      path: /mutate-ipam-cluster-x-k8s-io-v1alpha1-netboxiprangeglobalpool
   failurePolicy: Fail
-  name: mnetboxippool.kb.io
+  matchPolicy: Equivalent
+  name: default.netboxiprangeglobalpool.ipam.cluster.x-k8s.io
   rules:
   - apiGroups:
     - ipam.cluster.x-k8s.io
     apiVersions:
-    - v1alpha1
+    - v1alpha2
     operations:
     - CREATE
     - UPDATE
     resources:
-    - netboxippools
+    - netboxiprangeglobalpools
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-ipam-cluster-x-k8s-io-v1alpha1-netboxiprangepool
+  failurePolicy: Fail
+  matchPolicy: Equivalent
+  name: default.netboxiprangepool.ipam.cluster.x-k8s.io
+  rules:
+  - apiGroups:
+    - ipam.cluster.x-k8s.io
+    apiVersions:
+    - v1alpha2
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - netboxiprangepools
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-ipam-cluster-x-k8s-io-v1alpha1-netboxprefixglobalpool
+  failurePolicy: Fail
+  matchPolicy: Equivalent
+  name: default.netboxprefixglobalpool.ipam.cluster.x-k8s.io
+  rules:
+  - apiGroups:
+    - ipam.cluster.x-k8s.io
+    apiVersions:
+    - v1alpha2
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - netboxprefixglobalpools
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-ipam-cluster-x-k8s-io-v1alpha1-netboxprefixpool
+  failurePolicy: Fail
+  matchPolicy: Equivalent
+  name: default.netboxprefixpool.ipam.cluster.x-k8s.io
+  rules:
+  - apiGroups:
+    - ipam.cluster.x-k8s.io
+    apiVersions:
+    - v1alpha2
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - netboxprefixpools
   sideEffects: None
 ---
 apiVersion: admissionregistration.k8s.io/v1
@@ -32,21 +100,93 @@ metadata:
 webhooks:
 - admissionReviewVersions:
   - v1
+  - v1beta1
   clientConfig:
     service:
       name: webhook-service
       namespace: system
-      path: /validate-ipam-cluster-x-k8s-io-v1alpha1-netboxippool
+      path: /validate-ipam-cluster-x-k8s-io-v1alpha1-netboxiprangeglobalpool
   failurePolicy: Fail
-  name: vnetboxippool.kb.io
+  matchPolicy: Equivalent
+  name: validation.netboxiprangeglobalpool.ipam.cluster.x-k8s.io
   rules:
   - apiGroups:
     - ipam.cluster.x-k8s.io
     apiVersions:
-    - v1alpha1
+    - v1alpha2
     operations:
     - CREATE
     - UPDATE
+    - DELETE
     resources:
-    - netboxippools
+    - netboxiprangeglobalpools
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-ipam-cluster-x-k8s-io-v1alpha1-netboxiprangepool
+  failurePolicy: Fail
+  matchPolicy: Equivalent
+  name: validation.netboxiprangepool.ipam.cluster.x-k8s.io
+  rules:
+  - apiGroups:
+    - ipam.cluster.x-k8s.io
+    apiVersions:
+    - v1alpha2
+    operations:
+    - CREATE
+    - UPDATE
+    - DELETE
+    resources:
+    - netboxiprangepools
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-ipam-cluster-x-k8s-io-v1alpha1-netboxprefixglobalpool
+  failurePolicy: Fail
+  matchPolicy: Equivalent
+  name: validation.netboxprefixglobalpool.ipam.cluster.x-k8s.io
+  rules:
+  - apiGroups:
+    - ipam.cluster.x-k8s.io
+    apiVersions:
+    - v1alpha2
+    operations:
+    - CREATE
+    - UPDATE
+    - DELETE
+    resources:
+    - netboxprefixglobalpools
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-ipam-cluster-x-k8s-io-v1alpha1-netboxprefixpool
+  failurePolicy: Fail
+  matchPolicy: Equivalent
+  name: validation.netboxprefixpool.ipam.cluster.x-k8s.io
+  rules:
+  - apiGroups:
+    - ipam.cluster.x-k8s.io
+    apiVersions:
+    - v1alpha2
+    operations:
+    - CREATE
+    - UPDATE
+    - DELETE
+    resources:
+    - netboxprefixpools
   sideEffects: None

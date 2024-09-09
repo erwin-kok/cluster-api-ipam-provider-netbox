@@ -4,16 +4,16 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.15.0
-  name: netboxippools.ipam.cluster.x-k8s.io
+  name: netboxiprangepools.ipam.cluster.x-k8s.io
 spec:
   group: ipam.cluster.x-k8s.io
   names:
     categories:
     - cluster-api
-    kind: NetboxIPPool
-    listKind: NetboxIPPoolList
-    plural: netboxippools
-    singular: netboxippool
+    kind: NetboxIPRangePool
+    listKind: NetboxIPRangePoolList
+    plural: netboxiprangepools
+    singular: netboxiprangepool
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
@@ -36,7 +36,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: NetboxIPPool is the Schema for the netboxippools API
+        description: NetboxIPRangePool is the Schema for the netboxiprangepools API
         properties:
           apiVersion:
             description: |-
@@ -56,14 +56,47 @@ spec:
           metadata:
             type: object
           spec:
-            description: NetboxIPPoolSpec defines the desired state of NetboxIPPool.
+            description: NetboxIPRangePoolSpec defines the desired state of NetboxIPRangePool
+            properties:
+              endAddress:
+                description: EndAddress is the EndAddress of the IP-Range
+                type: string
+              gateway:
+                description: Gateway
+                type: string
+              startAddress:
+                description: StartAddress is the StartAddress of the IP-Range
+                type: string
+            required:
+            - endAddress
+            - startAddress
             type: object
           status:
-            description: NetboxIPPoolStatus defines the observed state of NetboxIPPool.
+            description: NetboxIPRangePoolStatus defines the observed state of NetboxIPRangePool
             properties:
               ipAddresses:
                 description: Addresses reports the count of total, free, and used
                   IPs in the pool.
+                properties:
+                  free:
+                    description: |-
+                      Free is the count of unallocated IPs in the pool.
+                      Counts greater than int can contain will report as math.MaxInt.
+                    type: integer
+                  total:
+                    description: |-
+                      Total is the total number of IPs configured for the pool.
+                      Counts greater than int can contain will report as math.MaxInt.
+                    type: integer
+                  used:
+                    description: |-
+                      Used is the count of allocated IPs in the pool.
+                      Counts greater than int can contain will report as math.MaxInt.
+                    type: integer
+                required:
+                - free
+                - total
+                - used
                 type: object
             type: object
         type: object

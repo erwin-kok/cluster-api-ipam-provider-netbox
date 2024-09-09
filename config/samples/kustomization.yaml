@@ -1,4 +1,7 @@
 ## Append samples of your project ##
 resources:
-- ipam_v1alpha1_netboxippool.yaml
+- ipam_v1alpha1_netboxprefixpool.yaml
+- ipam_v1alpha1_netboxiprangepool.yaml
+- ipam_v1alpha1_netboxprefixglobalpool.yaml
+- ipam_v1alpha1_netboxiprangeglobalpool.yaml
 # +kubebuilder:scaffold:manifestskustomizesamples
