@@ -1,9 +1,9 @@
 apiVersion: ipam.cluster.x-k8s.io/v1alpha1
-kind: NetboxPrefixPool
+kind: NetboxGlobalIPPool
 metadata:
   labels:
     app.kubernetes.io/name: cluster-api-ipam-provider-netbox
     app.kubernetes.io/managed-by: kustomize
-  name: netboxprefixpool-sample
+  name: netboxglobalippool-sample
 spec:
   # TODO(user): Add fields here

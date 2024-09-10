@@ -53,7 +53,7 @@ rules:
 - apiGroups:
   - ipam.cluster.x-k8s.io
   resources:
-  - netboxiprangeglobalpools
+  - netboxglobalippools
   verbs:
   - create
   - delete
@@ -65,13 +65,13 @@ rules:
 - apiGroups:
   - ipam.cluster.x-k8s.io
   resources:
-  - netboxiprangeglobalpools/finalizers
+  - netboxglobalippools/finalizers
   verbs:
   - update
 - apiGroups:
   - ipam.cluster.x-k8s.io
   resources:
-  - netboxiprangeglobalpools/status
+  - netboxglobalippools/status
   verbs:
   - get
   - patch
@@ -79,7 +79,7 @@ rules:
 - apiGroups:
   - ipam.cluster.x-k8s.io
   resources:
-  - netboxiprangepools
+  - netboxippools
   verbs:
   - create
   - delete
@@ -91,65 +91,13 @@ rules:
 - apiGroups:
   - ipam.cluster.x-k8s.io
   resources:
-  - netboxiprangepools/finalizers
+  - netboxippools/finalizers
   verbs:
   - update
 - apiGroups:
   - ipam.cluster.x-k8s.io
   resources:
-  - netboxiprangepools/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - ipam.cluster.x-k8s.io
-  resources:
-  - netboxprefixglobalpools
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ipam.cluster.x-k8s.io
-  resources:
-  - netboxprefixglobalpools/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - ipam.cluster.x-k8s.io
-  resources:
-  - netboxprefixglobalpools/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - ipam.cluster.x-k8s.io
-  resources:
-  - netboxprefixpools
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ipam.cluster.x-k8s.io
-  resources:
-  - netboxprefixpools/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - ipam.cluster.x-k8s.io
-  resources:
-  - netboxprefixpools/status
+  - netboxippools/status
   verbs:
   - get
   - patch

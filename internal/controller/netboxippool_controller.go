@@ -18,32 +18,35 @@ package controller
 
 import (
 	"context"
-	ipamv1alpha1 "github.com/erwin-kok/cluster-api-ipam-provider-netbox/api/v1alpha1"
+
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime"
 	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1beta1"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	"k8s.io/apimachinery/pkg/runtime"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	ipamv1alpha1 "github.com/erwin-kok/cluster-api-ipam-provider-netbox/api/v1alpha1"
 )
 
-// NetboxPrefixGlobalPoolReconciler reconciles a NetboxPrefixGlobalPool object
-type NetboxPrefixGlobalPoolReconciler struct {
+// NetboxIPPoolReconciler reconciles a NetboxIPPool object
+type NetboxIPPoolReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 }
 
-func AddNetboxPrefixGlobalPoolReconciler(mgr manager.Manager) error {
-	reconciler := &NetboxPrefixGlobalPoolReconciler{
+func AddNetboxIPPoolReconciler(mgr manager.Manager) error {
+	reconciler := &NetboxIPPoolReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&ipamv1alpha1.NetboxPrefixGlobalPool{}).
+		For(&ipamv1alpha1.NetboxIPPool{}).
 		Watches(
 			&ipamv1.IPAddress{},
 			handler.EnqueueRequestsFromMapFunc(func(_ context.Context, clientObj client.Object) []reconcile.Request {
@@ -51,23 +54,23 @@ func AddNetboxPrefixGlobalPoolReconciler(mgr manager.Manager) error {
 				if !ok {
 					return nil
 				}
-				return ipAddressToNetboxIPPool(ipAddress, ipamv1alpha1.NetboxPrefixGlobalPoolKind)
+				return ipAddressToNetboxIPPool(ipAddress, ipamv1alpha1.NetboxIPPoolKind)
 			}),
 		).
 		Complete(reconciler)
 }
 
-// +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=netboxprefixglobalpools,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=netboxprefixglobalpools/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=netboxprefixglobalpools/finalizers,verbs=update
+// +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=netboxippools,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=netboxippools/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=netboxippools/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-func (r *NetboxPrefixGlobalPoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *NetboxIPPoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
-	logger.Info("Reconciling NetboxPrefixGlobalPool")
+	logger.Info("Reconciling NetboxIPPool")
 
-	pool := &ipamv1alpha1.NetboxPrefixGlobalPool{}
+	pool := &ipamv1alpha1.NetboxIPPool{}
 	if err := r.Client.Get(ctx, req.NamespacedName, pool); err != nil {
 		if !apierrors.IsNotFound(err) {
 			return ctrl.Result{}, errors.Wrap(err, "could not fetch NetboxIPPool")

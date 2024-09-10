@@ -22,10 +22,11 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
+
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
-	"time"
 
 	nb "github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/netbox"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -62,7 +63,7 @@ func init() {
 }
 
 func main() {
-	nbclient, err := nb.NewNetBoxClient("http://localhost:8000", "b1f2db68f235158beea51b0554fc067814221c3a")
+	nbclient := nb.NewNetBoxClient("http://localhost:8000", "b1f2db68f235158beea51b0554fc067814221c3a")
 	ctx1 := context.Background()
 	iprange, err := nbclient.GetIPRange(ctx1, "10.0.0.1/24", "")
 	if err != nil {
@@ -77,7 +78,7 @@ func main() {
 	}
 
 	start := time.Now()
-	_ = nbclient.GatherStatistics(ctx1, []*nb.AddressPool{prefix, iprange})
+	_ = nbclient.GatherStatistics(ctx1, []*nb.NetboxIPPool{prefix, iprange})
 
 	fmt.Println(prefix)
 	fmt.Println(iprange)
@@ -91,8 +92,6 @@ func main() {
 	}
 
 	fmt.Println(ipAddress)
-
-	nbclient.Bla(ctx1, 1)
 
 	/********/
 
@@ -195,20 +194,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := controller.AddNetboxPrefixPoolReconciler(mgr); err != nil {
+	if err := controller.AddNetboxIPPoolReconciler(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "NetboxPrefixPool")
 		os.Exit(1)
 	}
-	if err := controller.AddNetboxPrefixGlobalPoolReconciler(mgr); err != nil {
+	if err := controller.AddNetboxGlobalIPPoolReconciler(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "NetboxPrefixGlobalPool")
-		os.Exit(1)
-	}
-	if err := controller.AddNetboxIPRangePoolReconciler(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "NetboxIPRangePool")
-		os.Exit(1)
-	}
-	if err := controller.AddNetboxIPRangeGlobalPoolReconciler(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "NetboxIPRangeGlobalPool")
 		os.Exit(1)
 	}
 

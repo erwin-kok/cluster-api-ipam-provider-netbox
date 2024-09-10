@@ -2,6 +2,7 @@ package pool
 
 import (
 	"context"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1beta1"
@@ -20,13 +21,12 @@ func ListAddressesInUse(ctx context.Context, c client.Client, namespace string, 
 		},
 		client.InNamespace(namespace),
 	)
-	addr := []ipamv1.IPAddress{}
+	var addr []ipamv1.IPAddress
 	for _, a := range addresses.Items {
 		gv, _ := schema.ParseGroupVersion(a.APIVersion)
-		if gv.Group != "ipam.cluster.x-k8s.io" {
-			continue
+		if gv.Group == "ipam.cluster.x-k8s.io" {
+			addr = append(addr, a)
 		}
-		addr = append(addr, a)
 	}
 	return addr, err
 }

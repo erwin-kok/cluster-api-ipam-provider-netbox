@@ -36,12 +36,12 @@ var _ = Describe("NetboxIPRangeGlobalPool Webhook", func() {
 			scheme := runtime.NewScheme()
 			Expect(ipamv1.AddToScheme(scheme)).To(Succeed())
 
-			namespacedPool := &ipamv1alpha1.NetboxPrefixPool{
+			namespacedPool := &ipamv1alpha1.NetboxIPPool{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "my-pool",
 				},
-				Spec: ipamv1alpha1.NetboxPrefixPoolSpec{
-					Prefix:  "20.0.0.0/14",
+				Spec: ipamv1alpha1.NetboxIPPoolSpec{
+					Address: "20.0.0.0/14",
 					Gateway: "10.0.0.1",
 				},
 			}

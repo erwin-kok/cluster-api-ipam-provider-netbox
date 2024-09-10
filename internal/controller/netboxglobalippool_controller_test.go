@@ -30,7 +30,7 @@ import (
 	ipamv1alpha1 "github.com/erwin-kok/cluster-api-ipam-provider-netbox/api/v1alpha1"
 )
 
-var _ = Describe("NetboxPrefixPool Controller", func() {
+var _ = Describe("NetboxPrefixGlobalPool Controller", func() {
 	Context("When reconciling a resource", func() {
 		const resourceName = "test-resource"
 
@@ -40,13 +40,13 @@ var _ = Describe("NetboxPrefixPool Controller", func() {
 			Name:      resourceName,
 			Namespace: "default", // TODO(user):Modify as needed
 		}
-		netboxprefixpool := &ipamv1alpha1.NetboxPrefixPool{}
+		netboxprefixglobalpool := &ipamv1alpha1.NetboxGlobalIPPool{}
 
 		BeforeEach(func() {
-			By("creating the custom resource for the Kind NetboxPrefixPool")
-			err := k8sClient.Get(ctx, typeNamespacedName, netboxprefixpool)
+			By("creating the custom resource for the Kind NetboxPrefixGlobalPool")
+			err := k8sClient.Get(ctx, typeNamespacedName, netboxprefixglobalpool)
 			if err != nil && errors.IsNotFound(err) {
-				resource := &ipamv1alpha1.NetboxPrefixPool{
+				resource := &ipamv1alpha1.NetboxGlobalIPPool{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      resourceName,
 						Namespace: "default",
@@ -59,16 +59,16 @@ var _ = Describe("NetboxPrefixPool Controller", func() {
 
 		AfterEach(func() {
 			// TODO(user): Cleanup logic after each test, like removing the resource instance.
-			resource := &ipamv1alpha1.NetboxPrefixPool{}
+			resource := &ipamv1alpha1.NetboxGlobalIPPool{}
 			err := k8sClient.Get(ctx, typeNamespacedName, resource)
 			Expect(err).NotTo(HaveOccurred())
 
-			By("Cleanup the specific resource instance NetboxPrefixPool")
+			By("Cleanup the specific resource instance NetboxPrefixGlobalPool")
 			Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
 		})
 		It("should successfully reconcile the resource", func() {
 			By("Reconciling the created resource")
-			controllerReconciler := &NetboxPrefixPoolReconciler{
+			controllerReconciler := &NetboxGlobalIPPoolReconciler{
 				Client: k8sClient,
 				Scheme: k8sClient.Scheme(),
 			}

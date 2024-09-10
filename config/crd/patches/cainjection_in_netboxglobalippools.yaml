@@ -4,4 +4,4 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: CERTIFICATE_NAMESPACE/CERTIFICATE_NAME
-  name: netboxiprangepools.ipam.cluster.x-k8s.io
+  name: netboxglobalippools.ipam.cluster.x-k8s.io

@@ -58,7 +58,7 @@ var (
 // SetupWebhookWithManager will set up the manager to manage the webhooks
 func (w *NetboxIPPool) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	err := ctrl.NewWebhookManagedBy(mgr).
-		For(&ipamv1alpha1.NetboxPrefixPool{}).
+		For(&ipamv1alpha1.NetboxIPPool{}).
 		WithDefaulter(w).
 		WithValidator(w).
 		Complete()
@@ -66,23 +66,7 @@ func (w *NetboxIPPool) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		return err
 	}
 	err = ctrl.NewWebhookManagedBy(mgr).
-		For(&ipamv1alpha1.NetboxPrefixGlobalPool{}).
-		WithDefaulter(w).
-		WithValidator(w).
-		Complete()
-	if err != nil {
-		return err
-	}
-	err = ctrl.NewWebhookManagedBy(mgr).
-		For(&ipamv1alpha1.NetboxIPRangePool{}).
-		WithDefaulter(w).
-		WithValidator(w).
-		Complete()
-	if err != nil {
-		return err
-	}
-	err = ctrl.NewWebhookManagedBy(mgr).
-		For(&ipamv1alpha1.NetboxIPRangeGlobalPool{}).
+		For(&ipamv1alpha1.NetboxGlobalIPPool{}).
 		WithDefaulter(w).
 		WithValidator(w).
 		Complete()

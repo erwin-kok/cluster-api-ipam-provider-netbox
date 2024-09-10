@@ -14,7 +14,7 @@ resources:
   controller: true
   domain: cluster.x-k8s.io
   group: ipam
-  kind: NetboxPrefixPool
+  kind: NetboxIPPool
   path: github.com/erwin-kok/cluster-api-ipam-provider-netbox/api/v1alpha1
   version: v1alpha1
   webhooks:
@@ -27,33 +27,7 @@ resources:
   controller: true
   domain: cluster.x-k8s.io
   group: ipam
-  kind: NetboxIPRangePool
-  path: github.com/erwin-kok/cluster-api-ipam-provider-netbox/api/v1alpha1
-  version: v1alpha1
-  webhooks:
-    defaulting: true
-    validation: true
-    webhookVersion: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  controller: true
-  domain: cluster.x-k8s.io
-  group: ipam
-  kind: NetboxPrefixGlobalPool
-  path: github.com/erwin-kok/cluster-api-ipam-provider-netbox/api/v1alpha1
-  version: v1alpha1
-  webhooks:
-    defaulting: true
-    validation: true
-    webhookVersion: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  controller: true
-  domain: cluster.x-k8s.io
-  group: ipam
-  kind: NetboxIPRangeGlobalPool
+  kind: NetboxGlobalIPPool
   path: github.com/erwin-kok/cluster-api-ipam-provider-netbox/api/v1alpha1
   version: v1alpha1
   webhooks:

@@ -4,16 +4,16 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.15.0
-  name: netboxiprangepools.ipam.cluster.x-k8s.io
+  name: netboxippools.ipam.cluster.x-k8s.io
 spec:
   group: ipam.cluster.x-k8s.io
   names:
     categories:
     - cluster-api
-    kind: NetboxIPRangePool
-    listKind: NetboxIPRangePoolList
-    plural: netboxiprangepools
-    singular: netboxiprangepool
+    kind: NetboxIPPool
+    listKind: NetboxIPPoolList
+    plural: netboxippools
+    singular: netboxippool
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
@@ -36,7 +36,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: NetboxIPRangePool is the Schema for the netboxiprangepools API
+        description: NetboxIPPool is the Schema for the netboxippools API
         properties:
           apiVersion:
             description: |-
@@ -56,23 +56,46 @@ spec:
           metadata:
             type: object
           spec:
-            description: NetboxIPRangePoolSpec defines the desired state of NetboxIPRangePool
+            description: NetboxIPPoolSpec defines the desired state of NetboxIPPool
             properties:
-              endAddress:
-                description: EndAddress is the EndAddress of the IP-Range
+              address:
+                description: Depending on the type, an Address is either the prefix
+                  or the start address of an ip-range, in CIDR notation.
                 type: string
+              credentialsRef:
+                description: |-
+                  CredentialsRef is a reference to a Secret that contains the credentials to use for accessing th Netbox instance.
+                  if no namespace is provided, the namespace of the NetboxIPPool will be used.
+                properties:
+                  name:
+                    description: name is unique within a namespace to reference a
+                      secret resource.
+                    type: string
+                  namespace:
+                    description: namespace defines the space within which the secret
+                      name must be unique.
+                    type: string
+                type: object
+                x-kubernetes-map-type: atomic
               gateway:
                 description: Gateway
                 type: string
-              startAddress:
-                description: StartAddress is the StartAddress of the IP-Range
+              type:
+                description: Type of the pool. Can either be Prefix or IPRange
+                enum:
+                - Prefix
+                - IPRange
+                type: string
+              vrf:
+                description: Vrf where the Address is part of. If not provided, the
+                  "Global" Vrf is used.
                 type: string
             required:
-            - endAddress
-            - startAddress
+            - address
+            - type
             type: object
           status:
-            description: NetboxIPRangePoolStatus defines the observed state of NetboxIPRangePool
+            description: NetboxIPPoolStatus defines the observed state of NetboxIPPool
             properties:
               ipAddresses:
                 description: Addresses reports the count of total, free, and used

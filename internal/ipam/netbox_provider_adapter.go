@@ -3,6 +3,8 @@ package ipam
 import (
 	"context"
 	"fmt"
+	"slices"
+
 	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/index"
 	poolutil "github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/pool"
 	"github.com/pkg/errors"
@@ -19,7 +21,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"slices"
 
 	ipamv1alpha1 "github.com/erwin-kok/cluster-api-ipam-provider-netbox/api/v1alpha1"
 )
@@ -47,19 +48,11 @@ func (a *NetboxProviderAdapter) SetupWithManager(_ context.Context, b *ctrl.Buil
 			predicate.Or(
 				ClaimReferencesPoolKind(metav1.GroupKind{
 					Group: ipamv1alpha1.GroupVersion.Group,
-					Kind:  ipamv1alpha1.NetboxPrefixPoolKind,
+					Kind:  ipamv1alpha1.NetboxIPPoolKind,
 				}),
 				ClaimReferencesPoolKind(metav1.GroupKind{
 					Group: ipamv1alpha1.GroupVersion.Group,
-					Kind:  ipamv1alpha1.NetboxPrefixGlobalPoolKind,
-				}),
-				ClaimReferencesPoolKind(metav1.GroupKind{
-					Group: ipamv1alpha1.GroupVersion.Group,
-					Kind:  ipamv1alpha1.NetboxIPRangePoolKind,
-				}),
-				ClaimReferencesPoolKind(metav1.GroupKind{
-					Group: ipamv1alpha1.GroupVersion.Group,
-					Kind:  ipamv1alpha1.NetboxIPRangeGlobalPoolKind,
+					Kind:  ipamv1alpha1.NetboxIPGlobalPoolKind,
 				}),
 			),
 		)).
@@ -68,7 +61,7 @@ func (a *NetboxProviderAdapter) SetupWithManager(_ context.Context, b *ctrl.Buil
 			MaxConcurrentReconciles: 1,
 		}).
 		Watches(
-			&ipamv1alpha1.NetboxPrefixPool{},
+			&ipamv1alpha1.NetboxIPPool{},
 			handler.EnqueueRequestsFromMapFunc(a.netboxPoolToIPClaims("NetboxPrefixPool")),
 			builder.WithPredicates(predicate.Or(
 				resourceTransitionedToUnpaused(),
@@ -76,24 +69,8 @@ func (a *NetboxProviderAdapter) SetupWithManager(_ context.Context, b *ctrl.Buil
 			)),
 		).
 		Watches(
-			&ipamv1alpha1.NetboxPrefixGlobalPool{},
+			&ipamv1alpha1.NetboxGlobalIPPool{},
 			handler.EnqueueRequestsFromMapFunc(a.netboxPoolToIPClaims("NetboxPrefixGlobalPool")),
-			builder.WithPredicates(predicate.Or(
-				resourceTransitionedToUnpaused(),
-				poolNoLongerEmpty(),
-			)),
-		).
-		Watches(
-			&ipamv1alpha1.NetboxIPRangePool{},
-			handler.EnqueueRequestsFromMapFunc(a.netboxPoolToIPClaims("NetboxIPRangePool")),
-			builder.WithPredicates(predicate.Or(
-				resourceTransitionedToUnpaused(),
-				poolNoLongerEmpty(),
-			)),
-		).
-		Watches(
-			&ipamv1alpha1.NetboxIPRangeGlobalPool{},
-			handler.EnqueueRequestsFromMapFunc(a.netboxPoolToIPClaims("NetboxIPRangeGlobalPool")),
 			builder.WithPredicates(predicate.Or(
 				resourceTransitionedToUnpaused(),
 				poolNoLongerEmpty(),
@@ -142,18 +119,12 @@ func (a *NetboxProviderAdapter) ClaimHandlerFor(_ client.Client, claim *ipamv1.I
 	}
 }
 
-// +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=netboxprefixpools,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=netboxprefixpools/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=netboxprefixpools/finalizers,verbs=update
-// +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=netboxprefixglobalpools,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=netboxprefixglobalpools/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=netboxprefixglobalpools/finalizers,verbs=update
-// +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=netboxiprangepools,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=netboxiprangepools/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=netboxiprangepools/finalizers,verbs=update
-// +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=netboxiprangeglobalpools,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=netboxiprangeglobalpools/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=netboxiprangeglobalpools/finalizers,verbs=update
+// +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=netboxippools,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=netboxippools/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=netboxippools/finalizers,verbs=update
+// +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=netboxglobalippools,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=netboxglobalippools/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=netboxglobalippools/finalizers,verbs=update
 // +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=ipaddressclaims,verbs=get;list;watch;update;patch
 // +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=ipaddresses,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=ipaddressclaims/status;ipaddresses/status,verbs=get;update;patch
@@ -164,26 +135,14 @@ func (a *NetboxProviderAdapter) ClaimHandlerFor(_ client.Client, claim *ipamv1.I
 func (h *IPAddressClaimHandler) FetchPool(ctx context.Context) (client.Object, *ctrl.Result, error) {
 	log := ctrl.LoggerFrom(ctx)
 
-	if h.claim.Spec.PoolRef.Kind == ipamv1alpha1.NetboxPrefixPoolKind {
-		icippool := &ipamv1alpha1.NetboxPrefixPool{}
+	if h.claim.Spec.PoolRef.Kind == ipamv1alpha1.NetboxIPPoolKind {
+		icippool := &ipamv1alpha1.NetboxIPPool{}
 		if err := h.Client.Get(ctx, types.NamespacedName{Namespace: h.claim.Namespace, Name: h.claim.Spec.PoolRef.Name}, icippool); err != nil {
 			return nil, nil, errors.Wrap(err, "failed to fetch pool")
 		}
 		h.pool = icippool
-	} else if h.claim.Spec.PoolRef.Kind == ipamv1alpha1.NetboxPrefixGlobalPoolKind {
-		gicippool := &ipamv1alpha1.NetboxPrefixGlobalPool{}
-		if err := h.Client.Get(ctx, types.NamespacedName{Name: h.claim.Spec.PoolRef.Name}, gicippool); err != nil {
-			return nil, nil, err
-		}
-		h.pool = gicippool
-	} else if h.claim.Spec.PoolRef.Kind == ipamv1alpha1.NetboxIPRangePoolKind {
-		gicippool := &ipamv1alpha1.NetboxIPRangePool{}
-		if err := h.Client.Get(ctx, types.NamespacedName{Name: h.claim.Spec.PoolRef.Name}, gicippool); err != nil {
-			return nil, nil, err
-		}
-		h.pool = gicippool
-	} else if h.claim.Spec.PoolRef.Kind == ipamv1alpha1.NetboxIPRangeGlobalPoolKind {
-		gicippool := &ipamv1alpha1.NetboxIPRangeGlobalPool{}
+	} else if h.claim.Spec.PoolRef.Kind == ipamv1alpha1.NetboxIPGlobalPoolKind {
+		gicippool := &ipamv1alpha1.NetboxGlobalIPPool{}
 		if err := h.Client.Get(ctx, types.NamespacedName{Name: h.claim.Spec.PoolRef.Name}, gicippool); err != nil {
 			return nil, nil, err
 		}
@@ -250,7 +209,7 @@ func poolStatus(o client.Object) *ipamv1alpha1.NetboxPoolStatusIPAddresses {
 	if !ok {
 		return nil
 	}
-	return pool.PoolStatus().GetAddresses()
+	return pool.PoolStatus().Addresses
 }
 
 // poolNoLongerEmpty only returns true if the Pool status previously had 0 free

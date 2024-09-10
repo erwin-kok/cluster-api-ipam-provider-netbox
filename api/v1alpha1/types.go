@@ -1,15 +1,21 @@
 package v1alpha1
 
 import (
-	"github.com/seancfoley/ipaddress-go/ipaddr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
-	NetboxPrefixPoolKind        = "NetboxPrefixPool"
-	NetboxPrefixGlobalPoolKind  = "NetboxPrefixGlobalPool"
-	NetboxIPRangePoolKind       = "NetboxIPRangePool"
-	NetboxIPRangeGlobalPoolKind = "NetboxIPRangeGlobalPool"
+	NetboxIPPoolKind       = "NetboxIPPoolKind"
+	NetboxIPGlobalPoolKind = "NetboxIPGlobalPoolKind"
+
+	SecretFinalizer = "netbox.ipam.cluster.x-k8s.io/Secret"
+)
+
+type NetboxPoolType string
+
+var (
+	PrefixType  = NetboxPoolType("Prefix")
+	IPRangeType = NetboxPoolType("IPRange")
 )
 
 // NetboxPoolStatusIPAddresses contains the count of total, free, and used IPs in a pool.
@@ -31,20 +37,7 @@ type NetboxPoolStatusIPAddresses struct {
 // +kubebuilder:object:generate=false
 type GenericNetboxPool interface {
 	client.Object
-	PoolSpec() GenericPoolSpec
-	PoolStatus() GenericPoolStatus
-}
-
-// GenericPoolSpec is a common interface for Netbox PoolSpec
-// +kubebuilder:object:generate=false
-type GenericPoolSpec interface {
-	ToSequentialRange() (*ipaddr.SequentialRange[*ipaddr.IPAddress], error)
-	GetGateway() string
-}
-
-// GenericPoolStatus is a common interface for Netbox PoolStatus
-// +kubebuilder:object:generate=false
-type GenericPoolStatus interface {
-	SetAddresses(addresses *NetboxPoolStatusIPAddresses)
-	GetAddresses() *NetboxPoolStatusIPAddresses
+	GetKind() string
+	PoolSpec() *NetboxIPPoolSpec
+	PoolStatus() *NetboxIPPoolStatus
 }

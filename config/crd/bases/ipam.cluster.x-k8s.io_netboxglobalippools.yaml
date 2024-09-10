@@ -4,16 +4,16 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.15.0
-  name: netboxprefixpools.ipam.cluster.x-k8s.io
+  name: netboxglobalippools.ipam.cluster.x-k8s.io
 spec:
   group: ipam.cluster.x-k8s.io
   names:
     categories:
     - cluster-api
-    kind: NetboxPrefixPool
-    listKind: NetboxPrefixPoolList
-    plural: netboxprefixpools
-    singular: netboxprefixpool
+    kind: NetboxGlobalIPPool
+    listKind: NetboxGlobalIPPoolList
+    plural: netboxglobalippools
+    singular: netboxglobalippool
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
@@ -36,7 +36,8 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: NetboxPrefixPool is the Schema for the netboxprefixpools API
+        description: NetboxGlobalIPPool is the Schema for the netboxglobalippools
+          API
         properties:
           apiVersion:
             description: |-
@@ -56,19 +57,46 @@ spec:
           metadata:
             type: object
           spec:
-            description: NetboxPrefixPoolSpec defines the desired state of NetboxPrefixPool
+            description: NetboxIPPoolSpec defines the desired state of NetboxIPPool
             properties:
+              address:
+                description: Depending on the type, an Address is either the prefix
+                  or the start address of an ip-range, in CIDR notation.
+                type: string
+              credentialsRef:
+                description: |-
+                  CredentialsRef is a reference to a Secret that contains the credentials to use for accessing th Netbox instance.
+                  if no namespace is provided, the namespace of the NetboxIPPool will be used.
+                properties:
+                  name:
+                    description: name is unique within a namespace to reference a
+                      secret resource.
+                    type: string
+                  namespace:
+                    description: namespace defines the space within which the secret
+                      name must be unique.
+                    type: string
+                type: object
+                x-kubernetes-map-type: atomic
               gateway:
                 description: Gateway
                 type: string
-              prefix:
-                description: Prefix is the prefix in CIDR notation, e.g. 20.0.0.0/14.
+              type:
+                description: Type of the pool. Can either be Prefix or IPRange
+                enum:
+                - Prefix
+                - IPRange
+                type: string
+              vrf:
+                description: Vrf where the Address is part of. If not provided, the
+                  "Global" Vrf is used.
                 type: string
             required:
-            - prefix
+            - address
+            - type
             type: object
           status:
-            description: NetboxPrefixPoolStatus defines the observed state of NetboxPrefixPool
+            description: NetboxIPPoolStatus defines the observed state of NetboxIPPool
             properties:
               ipAddresses:
                 description: Addresses reports the count of total, free, and used

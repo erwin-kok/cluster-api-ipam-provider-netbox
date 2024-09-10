@@ -1,16 +1,16 @@
-# permissions for end users to edit netboxiprangepools.
+# permissions for end users to edit netboxippools.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
     app.kubernetes.io/name: cluster-api-ipam-provider-netbox
     app.kubernetes.io/managed-by: kustomize
-  name: netboxiprangepool-editor-role
+  name: netboxippool-editor-role
 rules:
 - apiGroups:
   - ipam.cluster.x-k8s.io
   resources:
-  - netboxiprangepools
+  - netboxippools
   verbs:
   - create
   - delete
@@ -22,6 +22,6 @@ rules:
 - apiGroups:
   - ipam.cluster.x-k8s.io
   resources:
-  - netboxiprangepools/status
+  - netboxippools/status
   verbs:
   - get

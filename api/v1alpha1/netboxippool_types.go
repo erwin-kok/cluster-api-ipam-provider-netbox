@@ -17,27 +17,34 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"fmt"
-	"github.com/pkg/errors"
-	"github.com/seancfoley/ipaddress-go/ipaddr"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// NetboxIPRangePoolSpec defines the desired state of NetboxIPRangePool
-type NetboxIPRangePoolSpec struct {
-	// StartAddress is the StartAddress of the IP-Range
-	StartAddress string `json:"startAddress"`
+// NetboxIPPoolSpec defines the desired state of NetboxIPPool
+type NetboxIPPoolSpec struct {
+	// Type of the pool. Can either be Prefix or IPRange
+	// +kubebuilder:validation:Enum=Prefix;IPRange
+	Type NetboxPoolType `json:"type"`
 
-	// EndAddress is the EndAddress of the IP-Range
-	EndAddress string `json:"endAddress"`
+	// Depending on the type, an Address is either the prefix or the start address of an ip-range, in CIDR notation.
+	Address string `json:"address"`
+
+	// Vrf where the Address is part of. If not provided, the "Global" Vrf is used.
+	// +optional
+	Vrf string `json:"vrf,omitempty"`
 
 	// Gateway
 	// +optional
 	Gateway string `json:"gateway,omitempty"`
+
+	// CredentialsRef is a reference to a Secret that contains the credentials to use for accessing th Netbox instance.
+	// if no namespace is provided, the namespace of the NetboxIPPool will be used.
+	CredentialsRef *corev1.SecretReference `json:"credentialsRef,omitempty"`
 }
 
-// NetboxIPRangePoolStatus defines the observed state of NetboxIPRangePool
-type NetboxIPRangePoolStatus struct {
+// NetboxIPPoolStatus defines the observed state of NetboxIPPool
+type NetboxIPPoolStatus struct {
 	// Addresses reports the count of total, free, and used IPs in the pool.
 	// +optional
 	Addresses *NetboxPoolStatusIPAddresses `json:"ipAddresses,omitempty"`
@@ -52,58 +59,38 @@ type NetboxIPRangePoolStatus struct {
 // +kubebuilder:printcolumn:name="Free",type="integer",JSONPath=".status.ipAddresses.free",description="Count of unallocated IPs in the pool"
 // +kubebuilder:printcolumn:name="Used",type="integer",JSONPath=".status.ipAddresses.used",description="Count of allocated IPs in the pool"
 
-// NetboxIPRangePool is the Schema for the netboxiprangepools API
-type NetboxIPRangePool struct {
+// NetboxIPPool is the Schema for the netboxippools API
+type NetboxIPPool struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   NetboxIPRangePoolSpec   `json:"spec,omitempty"`
-	Status NetboxIPRangePoolStatus `json:"status,omitempty"`
+	Spec   NetboxIPPoolSpec   `json:"spec,omitempty"`
+	Status NetboxIPPoolStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// NetboxIPRangePoolList contains a list of NetboxIPRangePool
-type NetboxIPRangePoolList struct {
+// NetboxIPPoolList contains a list of NetboxIPPool
+type NetboxIPPoolList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []NetboxIPRangePool `json:"items"`
+	Items           []NetboxIPPool `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&NetboxIPRangePool{}, &NetboxIPRangePoolList{})
+	SchemeBuilder.Register(&NetboxIPPool{}, &NetboxIPPoolList{})
+}
+
+func (p *NetboxIPPool) GetKind() string {
+	return NetboxIPPoolKind
 }
 
 // PoolSpec implements the genericInClusterPool interface.
-func (p *NetboxIPRangePool) PoolSpec() GenericPoolSpec {
+func (p *NetboxIPPool) PoolSpec() *NetboxIPPoolSpec {
 	return &p.Spec
 }
 
 // PoolStatus implements the genericInClusterPool interface.
-func (p *NetboxIPRangePool) PoolStatus() GenericPoolStatus {
+func (p *NetboxIPPool) PoolStatus() *NetboxIPPoolStatus {
 	return &p.Status
-}
-
-func (p *NetboxIPRangePoolSpec) ToSequentialRange() (*ipaddr.SequentialRange[*ipaddr.IPAddress], error) {
-	startAddress, err := ipaddr.NewIPAddressString(p.StartAddress).ToAddress()
-	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("could not parse start address '%s'", p.StartAddress))
-	}
-	endAddress, err := ipaddr.NewIPAddressString(p.EndAddress).ToAddress()
-	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("could not parse end address '%s'", p.EndAddress))
-	}
-	return startAddress.SpanWithRange(endAddress), nil
-}
-
-func (p *NetboxIPRangePoolSpec) GetGateway() string {
-	return p.Gateway
-}
-
-func (p *NetboxIPRangePoolStatus) SetAddresses(addresses *NetboxPoolStatusIPAddresses) {
-	p.Addresses = addresses
-}
-
-func (p *NetboxIPRangePoolStatus) GetAddresses() *NetboxPoolStatusIPAddresses {
-	return p.Addresses
 }

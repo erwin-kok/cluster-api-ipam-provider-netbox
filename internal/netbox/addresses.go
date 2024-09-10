@@ -3,8 +3,9 @@ package netbox
 import (
 	"context"
 	"fmt"
-	"github.com/seancfoley/ipaddress-go/ipaddr"
 	"strconv"
+
+	"github.com/seancfoley/ipaddress-go/ipaddr"
 
 	"github.com/pkg/errors"
 )
@@ -13,7 +14,7 @@ const (
 	limit = 100
 )
 
-func (c *Client) GatherStatistics(ctx context.Context, pools []*AddressPool) error {
+func (c *Client) GatherStatistics(ctx context.Context, pools []*NetboxIPPool) error {
 	offset := 0
 	for _, p := range pools {
 		p.inuse = 0

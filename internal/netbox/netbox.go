@@ -3,13 +3,19 @@ package netbox
 import (
 	"context"
 	"fmt"
+
 	"github.com/go-resty/resty/v2"
 	"github.com/netbox-community/go-netbox/v3"
 	"github.com/pkg/errors"
 	"github.com/seancfoley/ipaddress-go/ipaddr"
 )
 
-type AddressPool struct {
+const (
+	UrlKey      = "url"
+	ApiTokenKey = "apiToken"
+)
+
+type NetboxIPPool struct {
 	id       int
 	isPrefix bool
 	display  string
@@ -18,19 +24,19 @@ type AddressPool struct {
 	inuse    int32
 }
 
-func (p *AddressPool) Total() int32 {
+func (p *NetboxIPPool) Total() int32 {
 	return (int32)(p.Range.GetCount().Int64())
 }
 
-func (p *AddressPool) InUse() int32 {
+func (p *NetboxIPPool) InUse() int32 {
 	return p.inuse
 }
 
-func (p *AddressPool) Available() int32 {
+func (p *NetboxIPPool) Available() int32 {
 	return p.Total() - p.InUse()
 }
 
-func (p *AddressPool) String() string {
+func (p *NetboxIPPool) String() string {
 	name := "IPRange"
 	if p.isPrefix {
 		name = "Prefix"
@@ -43,7 +49,7 @@ type Client struct {
 	client *resty.Client
 }
 
-func NewNetBoxClient(host, apiToken string) (*Client, error) {
+func NewNetBoxClient(host, apiToken string) *Client {
 	api := netbox.NewAPIClientFor(host, apiToken)
 	client := resty.New().
 		SetBaseURL("http://localhost:8000/api/ipam").
@@ -52,21 +58,10 @@ func NewNetBoxClient(host, apiToken string) (*Client, error) {
 	return &Client{
 		api:    api,
 		client: client,
-	}, nil
+	}
 }
 
-func (c *Client) Bla(ctx context.Context, id int32) {
-	// x, _, _ := c.api.IpamAPI.IpamPrefixesAvailableIpsCreate(ctx, 3).
-	// 	IPAddressRequest([]netbox.IPAddressRequest{
-	// 		{
-	// 			Address: "30.10.0.2",
-	// 		},
-	// 	}).
-	// 	Execute()
-	// fmt.Sprintf("%s", x)
-}
-
-func (c *Client) GetPrefix(ctx context.Context, prefix string, requestedVrf string) (*AddressPool, error) {
+func (c *Client) GetPrefix(ctx context.Context, prefix string, requestedVrf string) (*NetboxIPPool, error) {
 	prefixList := &PrefixList{}
 	request :=
 		c.client.
@@ -104,7 +99,7 @@ func (c *Client) GetPrefix(ctx context.Context, prefix string, requestedVrf stri
 		return nil, errors.Wrap(err, fmt.Sprintf("could not parse prefix '%s'", result.Prefix))
 	}
 
-	return &AddressPool{
+	return &NetboxIPPool{
 		id:       result.Id,
 		isPrefix: true,
 		display:  result.Display,
@@ -113,7 +108,7 @@ func (c *Client) GetPrefix(ctx context.Context, prefix string, requestedVrf stri
 	}, nil
 }
 
-func (c *Client) GetIPRange(ctx context.Context, startAddress string, requestedVrf string) (*AddressPool, error) {
+func (c *Client) GetIPRange(ctx context.Context, startAddress string, requestedVrf string) (*NetboxIPPool, error) {
 	ipRangeList := &IPRangeList{}
 	request :=
 		c.client.
@@ -149,7 +144,7 @@ func (c *Client) GetIPRange(ctx context.Context, startAddress string, requestedV
 	lower := ipaddr.NewIPAddressString(result.StartAddress).GetAddress()
 	upper := ipaddr.NewIPAddressString(result.EndAddress).GetAddress()
 
-	return &AddressPool{
+	return &NetboxIPPool{
 		id:       result.Id,
 		isPrefix: false,
 		display:  result.Display,

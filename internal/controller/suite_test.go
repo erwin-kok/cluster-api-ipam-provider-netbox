@@ -108,10 +108,8 @@ var _ = BeforeSuite(func() {
 
 	Expect(ipam.AddIPAddressClaimReconciler(ctx, mgr, "")).To(Succeed())
 
-	Expect(AddNetboxPrefixPoolReconciler(mgr)).To(Succeed())
-	Expect(AddNetboxPrefixGlobalPoolReconciler(mgr)).To(Succeed())
-	Expect(AddNetboxIPRangePoolReconciler(mgr)).To(Succeed())
-	Expect(AddNetboxIPRangeGlobalPoolReconciler(mgr)).To(Succeed())
+	Expect(AddNetboxIPPoolReconciler(mgr)).To(Succeed())
+	Expect(AddNetboxGlobalIPPoolReconciler(mgr)).To(Succeed())
 
 	go func() {
 		defer GinkgoRecover()
