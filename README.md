@@ -1,61 +1,26 @@
-# Cluster API IPAM Provider In Cluster
+## Cluster API IPAM Provider Netbox
+
+[![Build Status](https://github.com/erwin-kok/cluster-api-ipam-provider-netbox/actions/workflows/ci.yaml/badge.svg)](https://github.com/erwin-kok/cluster-api-ipam-provider-netbox/actions/workflows/ci.yaml?query=branch%3Amain)
+[![codecov](https://codecov.io/github/erwin-kok/cluster-api-ipam-provider-netbox/branch/main/graph/badge.svg?token=8OFF3L6EUL)](https://codecov.io/github/erwin-kok/cluster-api-ipam-provider-netbox)
+[![Go Report Card](https://goreportcard.com/badge/github.com/erwin-kok/cluster-api-ipam-provider-netbox)](https://goreportcard.com/report/github.com/erwin-kok/cluster-api-ipam-provider-netbox)
+[![Release Version](https://img.shields.io/badge/version-0.0.1-blue.svg)](https://github.com/erwin-kok/cluster-api-ipam-provider-netbox/releases/latest)
+[![GoDoc](https://pkg.go.dev/badge/github.com/erwin-kok/cluster-api-ipam-provider-netbox)](https://pkg.go.dev/github.com/erwin-kok/cluster-api-ipam-provider-netbox)
+[![License](https://img.shields.io/github/license/erwin-kok/cluster-api-ipam-provider-netbox.svg)](https://github.com/erwin-kok/cluster-api-ipam-provider-netbox/blob/master/LICENSE)
+
+
+## What is the Cluster API IPAM Provider Netbox
 
 This is an [IPAM provider](https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/proposals/20220125-ipam-integration.md#ipam-provider) for [Cluster API](https://github.com/kubernetes-sigs/cluster-api) that manages pools of IP addresses
 using [Netbox](https://netboxlabs.com/).
 
-go mod init github.com/erwin-kok/cluster-api-ipam-provider-netbox
+## Disclaimer
 
-kubebuilder init --domain cluster.x-k8s.io --repo github.com/erwin-kok/cluster-api-ipam-provider-netbox --project-name cluster-api-ipam-provider-netbox
+This project is currently under heavy development (WIP), and as such I do not guarantee functionality, stable interfaces and/or operation without any bugs/issues.
+Also, bugs/issues are not yet tracked. Please wait for the initial release 0.1.0 in a few weeks.
 
-kubebuilder create api --group ipam --version v1alpha1 --kind NetboxIPPool --controller=true --resource=true
-kubebuilder create webhook --group ipam --version v1alpha1 --kind NetboxIPPool --programmatic-validation --defaulting
+Since the implementation is far from complete, do not use this in production.
 
-kubebuilder create api --group ipam --version v1alpha1 --kind NetboxGlobalIPPool --controller=true --resource=true
-kubebuilder create webhook --group ipam --version v1alpha1 --kind NetboxGlobalIPPool --programmatic-validation --defaulting
+## Features
 
+TODO
 
-
-
-
-
-
-// resourceNetboxIPAddress
-// Create: resourceNetboxIPAddressCreate,
-// Read:   resourceNetboxIPAddressRead,
-// Update: resourceNetboxIPAddressUpdate,
-// Delete: resourceNetboxIPAddressDelete,
-// resource "netbox_ip_address" "node_management_ip" {
-// 	ip_address   = format("%s/%d", local.node.static_management_ip, split("/", local.netbox.management_network_prefix)[1])
-// 	status       = local.netbox_ip_address_status
-// 	tenant_id    = data.netbox_tenant.management_tenant.id
-// 	interface_id = netbox_interface.node_management_nic.id
-// 	object_type  = local.netbox_ip_address_object_type
-// 	description  = format(local.netbox_ip_description_template, "management", local.node.name)
-// 	tags         = concat(local.netbox_common_tags, [local.netbox_management_tag])
-// }
-//
-// // resourceNetboxAvailableIPAddress
-// // Create: resourceNetboxAvailableIPAddressCreate,
-//
-//
-//
-// // Read:   resourceNetboxAvailableIPAddressRead,
-// // Update: resourceNetboxAvailableIPAddressUpdate,
-// // Delete: resourceNetboxAvailableIPAddressDelete,
-// resource "netbox_available_ip_address" "node_management_ip" {
-// 	prefix_id    = data.netbox_prefix.management_network_prefix.id
-// 	status       = local.netbox_ip_address_status
-// 	tenant_id    = data.netbox_tenant.management_tenant.id
-// 	interface_id = netbox_interface.node_management_nic.id
-// 	object_type  = local.netbox_ip_address_object_type
-// 	description  = format(local.netbox_ip_description_template, "management", local.node.name)
-// 	tags         = concat(local.netbox_common_tags, [local.netbox_management_tag])
-// }
-//
-//
-//
-//
-// IpamPrefixesAvailableIpsCreate
-// IpamIPRangesAvailableIpsCreate
-//
-// IpamIPAddressesList
