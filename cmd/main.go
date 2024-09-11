@@ -93,7 +93,7 @@ func main() {
 
 	fmt.Println(ipAddress)
 
-	/********/
+	/* ****** */
 
 	var (
 		metricsAddr          string

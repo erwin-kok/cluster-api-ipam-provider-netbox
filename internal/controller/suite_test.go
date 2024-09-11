@@ -19,14 +19,15 @@ package controller
 import (
 	"context"
 	"fmt"
-	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/index"
-	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/ipam"
 	"path/filepath"
 	"runtime"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/envtest/komega"
 	"testing"
 	"time"
+
+	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/index"
+	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/ipam"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/envtest/komega"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
