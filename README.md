@@ -15,10 +15,10 @@ using [Netbox](https://netboxlabs.com/).
 
 ## Disclaimer
 
-This project is currently under heavy development (WIP), and as such I do not guarantee functionality, stable interfaces and/or operation without any bugs/issues.
-Also, bugs/issues are not yet tracked. Please wait for the initial release 0.1.0 in a few weeks.
+**This project is currently under heavy development (WIP), and as such I do not guarantee functionality, stable interfaces and/or operation without any bugs/issues.
+Also, bugs/issues are not yet tracked. Please wait for the initial release 0.1.0 in a few weeks.**
 
-Since the implementation is far from complete, do not use this in production.
+**Since the implementation is far from complete, do not use this in production!**
 
 ## Features
 
