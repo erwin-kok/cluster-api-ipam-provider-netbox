@@ -6,16 +6,12 @@ updates:
       interval: "weekly"
   commit-message:
       prefix: ":seedling:"
-  labels:
-    - "ok-to-test"
 - package-ecosystem: "gomod"
   directory: "/"
   schedule:
     interval: "weekly"
   commit-message:
     prefix: ":seedling:"
-  labels:
-    - "ok-to-test"
   ignore:
     # Ignore controller-runtime as its upgraded manually, following cluster-api
     - dependency-name: "sigs.k8s.io/controller-runtime"

@@ -1,0 +1,37 @@
+name: Create Draft Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write # Allow creating a release.
+
+jobs:
+  draft_release:
+    name: Create Draft Release
+    runs-on: ubuntu-latest
+    steps:
+      # - name: Set env
+      #   run:  echo "RELEASE_TAG=${GITHUB_REF:10}" >> $GITHUB_ENV
+      - name: Checkout the Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '^1.21'
+      # - name: generate release notes
+      #   run: |
+      #     make release-notes
+      - name: Create Release Artifacts
+        run: |
+          make release
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: out/*.*
+          # body_path: _releasenotes/${{ env.RELEASE_TAG }}.md
