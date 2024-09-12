@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/logger"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -63,6 +64,7 @@ type ClaimHandler interface {
 }
 
 func AddIPAddressClaimReconciler(ctx context.Context, mgr manager.Manager, watchFilter string) error {
+	log := logger.FromContext(ctx)
 	adapter := &NetboxProviderAdapter{
 		Client:           mgr.GetClient(),
 		WatchFilterValue: watchFilter,
@@ -74,7 +76,7 @@ func AddIPAddressClaimReconciler(ctx context.Context, mgr manager.Manager, watch
 		Adapter:          adapter,
 	}
 	b := ctrl.NewControllerManagedBy(mgr).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(ctrl.LoggerFrom(ctx), reconciler.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(log.GetLogger(), reconciler.WatchFilterValue)).
 		// A Watch is added for the Cluster in the case that the Cluster is
 		// unpaused so that a request can be queued to re-reconcile the
 		// IPAddressClaim.
@@ -105,7 +107,7 @@ func AddIPAddressClaimReconciler(ctx context.Context, mgr manager.Manager, watch
 
 // Reconcile is called by the controller to reconcile a claim.
 func (r *IPAddressClaimReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
-	logger := ctrl.LoggerFrom(ctx)
+	log := logger.FromContext(ctx)
 
 	// Fetch the IPAddressClaim
 	claim := &ipamv1.IPAddressClaim{}
@@ -121,16 +123,16 @@ func (r *IPAddressClaimReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		cluster, err := clusterutil.GetClusterFromMetadata(ctx, r.Client, claim.ObjectMeta)
 		if err != nil {
 			if apierrors.IsNotFound(err) {
-				logger.Info("IPAddressClaim linked to a cluster that is not found, unable to determine cluster's paused state, skipping reconciliation")
+				log.Info("IPAddressClaim linked to a cluster that is not found, unable to determine cluster's paused state, skipping reconciliation")
 				return ctrl.Result{}, nil
 			}
 
-			logger.Error(err, "error fetching cluster linked to IPAddressClaim")
+			log.Error(err, "error fetching cluster linked to IPAddressClaim")
 			return ctrl.Result{}, err
 		}
 
 		if annotations.IsPaused(cluster, cluster) {
-			logger.Info("IPAddressClaim linked to a cluster that is paused, skipping reconciliation")
+			log.Info("IPAddressClaim linked to a cluster that is paused, skipping reconciliation")
 			return ctrl.Result{}, nil
 		}
 	}
@@ -157,7 +159,7 @@ func (r *IPAddressClaimReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	if pool, res, err = handler.FetchPool(ctx); err != nil || res != nil {
 		if apierrors.IsNotFound(err) {
 			err := errors.New("pool not found")
-			logger.Error(err, "the referenced pool could not be found")
+			log.Error(err, "the referenced pool could not be found")
 			if !claim.ObjectMeta.DeletionTimestamp.IsZero() {
 				return ctrl.Result{}, r.reconcileDelete(ctx, claim)
 			}
@@ -168,12 +170,12 @@ func (r *IPAddressClaimReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 	if pool == nil {
 		err = fmt.Errorf("pool is nil")
-		logger.Error(err, "pool error")
+		log.Error(err, "pool error")
 		return ctrl.Result{}, errors.Wrap(err, "reconciliation failed")
 	}
 
 	if annotations.HasPaused(pool) {
-		logger.Info("IPAddressClaim references Pool which is paused, skipping reconciliation.", "IPAddressClaim", claim.GetName(), "Pool", pool.GetName())
+		log.Info("IPAddressClaim references Pool which is paused, skipping reconciliation.", "IPAddressClaim", claim.GetName(), "Pool", pool.GetName())
 		return ctrl.Result{}, nil
 	}
 
@@ -218,13 +220,13 @@ func (r *IPAddressClaimReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return unwrapResult(res), err
 	}
 
-	logger.Info(fmt.Sprintf("IPAddress %s/%s (%s) has been %s", address.Namespace, address.Name, address.Spec.Address, operationResult),
+	log.Info(fmt.Sprintf("IPAddress %s/%s (%s) has been %s", address.Namespace, address.Name, address.Spec.Address, operationResult),
 		"IPAddressClaim", fmt.Sprintf("%s/%s", claim.Namespace, claim.Name))
 
 	if !address.DeletionTimestamp.IsZero() {
 		// We prevent deleting IPAddresses while their corresponding IPClaim still exists since we cannot guarantee that the IP
 		// wil remain the same when we recreate it.
-		logger.Info("Address is marked for deletion, but deletion is prevented until the claim is deleted as well", "address", address.Name)
+		log.Info("Address is marked for deletion, but deletion is prevented until the claim is deleted as well", "address", address.Name)
 	}
 
 	claim.Status.AddressRef = corev1.LocalObjectReference{Name: address.Name}

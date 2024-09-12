@@ -46,28 +46,20 @@ var netboxiprangeglobalpoollog = logf.Log.WithName("netboxippool-resource")
 // +kubebuilder:webhook:verbs=create;update;delete,path=/validate-ipam-cluster-x-k8s-io-v1alpha1-netboxiprangeglobalpool,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=ipam.cluster.x-k8s.io,resources=netboxiprangeglobalpools,versions=v1alpha2,name=validation.netboxiprangeglobalpool.ipam.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 // +kubebuilder:webhook:verbs=create;update,path=/mutate-ipam-cluster-x-k8s-io-v1alpha1-netboxiprangeglobalpool,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=ipam.cluster.x-k8s.io,resources=netboxiprangeglobalpools,versions=v1alpha2,name=default.netboxiprangeglobalpool.ipam.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 
-// NetboxIPPool implements a validating and defaulting webhook for NetboxPrefixPool, NetboxPrefixGlobalPool, GlobalInClusterIPPool, NetboxIPRangePool and NetboxIPRangeGlobalPool.
-type NetboxIPPool struct {
+// WebhookNetboxIPPool implements a validating and defaulting webhook for NetboxIPPool.
+type WebhookNetboxIPPool struct {
 	Client client.Reader
 }
 
 var (
-	_ webhook.CustomDefaulter = &NetboxIPPool{}
-	_ webhook.CustomValidator = &NetboxIPPool{}
+	_ webhook.CustomDefaulter = &WebhookNetboxIPPool{}
+	_ webhook.CustomValidator = &WebhookNetboxIPPool{}
 )
 
 // SetupWebhookWithManager will set up the manager to manage the webhooks
-func (w *NetboxIPPool) SetupWebhookWithManager(mgr ctrl.Manager) error {
+func (w *WebhookNetboxIPPool) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	err := ctrl.NewWebhookManagedBy(mgr).
 		For(&ipamv1alpha1.NetboxIPPool{}).
-		WithDefaulter(w).
-		WithValidator(w).
-		Complete()
-	if err != nil {
-		return err
-	}
-	err = ctrl.NewWebhookManagedBy(mgr).
-		For(&ipamv1alpha1.NetboxGlobalIPPool{}).
 		WithDefaulter(w).
 		WithValidator(w).
 		Complete()
@@ -78,8 +70,8 @@ func (w *NetboxIPPool) SetupWebhookWithManager(mgr ctrl.Manager) error {
 }
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type
-func (w *NetboxIPPool) Default(_ context.Context, obj runtime.Object) error {
-	pool, ok := obj.(ipamv1alpha1.GenericNetboxPool)
+func (w *WebhookNetboxIPPool) Default(_ context.Context, obj runtime.Object) error {
+	pool, ok := obj.(*ipamv1alpha1.NetboxIPPool)
 	if !ok {
 		return apierrors.NewBadRequest(fmt.Sprintf("expected a NetboxPool but got a %T", obj))
 	}
@@ -88,8 +80,8 @@ func (w *NetboxIPPool) Default(_ context.Context, obj runtime.Object) error {
 }
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (w *NetboxIPPool) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
-	pool, ok := obj.(ipamv1alpha1.GenericNetboxPool)
+func (w *WebhookNetboxIPPool) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	pool, ok := obj.(*ipamv1alpha1.NetboxIPPool)
 	if !ok {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a NetboxPool but got a %T", obj))
 	}
@@ -101,13 +93,13 @@ func (w *NetboxIPPool) ValidateCreate(_ context.Context, obj runtime.Object) (ad
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (w *NetboxIPPool) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
-	oldPool, ok := oldObj.(ipamv1alpha1.GenericNetboxPool)
+func (w *WebhookNetboxIPPool) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+	oldPool, ok := oldObj.(*ipamv1alpha1.NetboxIPPool)
 	if !ok {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a NetboxPool but got a %T", oldObj))
 	}
 
-	newPool, ok := newObj.(ipamv1alpha1.GenericNetboxPool)
+	newPool, ok := newObj.(*ipamv1alpha1.NetboxIPPool)
 	if !ok {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a NetboxPool but got a %T", newObj))
 	}
@@ -119,8 +111,8 @@ func (w *NetboxIPPool) ValidateUpdate(_ context.Context, oldObj, newObj runtime.
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (w *NetboxIPPool) ValidateDelete(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
-	pool, ok := obj.(ipamv1alpha1.GenericNetboxPool)
+func (w *WebhookNetboxIPPool) ValidateDelete(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	pool, ok := obj.(*ipamv1alpha1.NetboxIPPool)
 	if !ok {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a NetboxPool but got a %T", obj))
 	}

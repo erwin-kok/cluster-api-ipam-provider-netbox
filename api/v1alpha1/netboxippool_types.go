@@ -21,6 +21,17 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type NetboxPoolType string
+
+const (
+	NetboxIPPoolKind = "NetboxIPPool"
+)
+
+var (
+	PrefixType  = NetboxPoolType("Prefix")
+	IPRangeType = NetboxPoolType("IPRange")
+)
+
 // NetboxIPPoolSpec defines the desired state of NetboxIPPool
 type NetboxIPPoolSpec struct {
 	// Type of the pool. Can either be Prefix or IPRange
@@ -48,6 +59,21 @@ type NetboxIPPoolStatus struct {
 	// Addresses reports the count of total, free, and used IPs in the pool.
 	// +optional
 	Addresses *NetboxPoolStatusIPAddresses `json:"ipAddresses,omitempty"`
+}
+
+// NetboxPoolStatusIPAddresses contains the count of total, free, and used IPs in a pool.
+type NetboxPoolStatusIPAddresses struct {
+	// Total is the total number of IPs configured for the pool.
+	// Counts greater than int can contain will report as math.MaxInt.
+	Total int `json:"total"`
+
+	// Free is the count of unallocated IPs in the pool.
+	// Counts greater than int can contain will report as math.MaxInt.
+	Free int `json:"free"`
+
+	// Used is the count of allocated IPs in the pool.
+	// Counts greater than int can contain will report as math.MaxInt.
+	Used int `json:"used"`
 }
 
 // +kubebuilder:object:root=true
@@ -79,18 +105,4 @@ type NetboxIPPoolList struct {
 
 func init() {
 	SchemeBuilder.Register(&NetboxIPPool{}, &NetboxIPPoolList{})
-}
-
-func (p *NetboxIPPool) GetKind() string {
-	return NetboxIPPoolKind
-}
-
-// PoolSpec implements the genericInClusterPool interface.
-func (p *NetboxIPPool) PoolSpec() *NetboxIPPoolSpec {
-	return &p.Spec
-}
-
-// PoolStatus implements the genericInClusterPool interface.
-func (p *NetboxIPPool) PoolStatus() *NetboxIPPoolStatus {
-	return &p.Status
 }

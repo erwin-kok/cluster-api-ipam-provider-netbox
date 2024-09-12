@@ -24,16 +24,15 @@ import (
 	"os"
 	"time"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1beta1"
-	"sigs.k8s.io/controller-runtime/pkg/cache"
-
 	nb "github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/netbox"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
@@ -41,9 +40,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	ipamv1alpha1 "github.com/erwin-kok/cluster-api-ipam-provider-netbox/api/v1alpha1"
-	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/controller"
+	controllers "github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/controllers"
 	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/index"
 	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/ipam"
+	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/logger"
 	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/webhooks"
 	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/version"
 	// +kubebuilder:scaffold:imports
@@ -51,7 +51,7 @@ import (
 
 var (
 	scheme   = runtime.NewScheme()
-	setupLog = ctrl.Log.WithName("setup")
+	setupLog = logger.NewLogger(ctrl.Log.WithName("setup"))
 )
 
 func init() {
@@ -63,6 +63,8 @@ func init() {
 }
 
 func main() {
+	fmt.Printf("Version: %s\n", version.Get().String())
+
 	nbclient := nb.NewNetBoxClient("http://localhost:8000", "b1f2db68f235158beea51b0554fc067814221c3a")
 	ctx1 := context.Background()
 	iprange, err := nbclient.GetIPRange(ctx1, "10.0.0.1/24", "")
@@ -194,17 +196,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := controller.AddNetboxIPPoolReconciler(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "NetboxPrefixPool")
-		os.Exit(1)
-	}
-	if err := controller.AddNetboxGlobalIPPoolReconciler(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "NetboxPrefixGlobalPool")
+	if err := (&controllers.NetboxIPPoolReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "NetboxIPPool")
 		os.Exit(1)
 	}
 
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
-		if err = (&webhooks.NetboxIPPool{}).SetupWebhookWithManager(mgr); err != nil {
+		if err = (&webhooks.WebhookNetboxIPPool{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "NetboxIPPool")
 			os.Exit(1)
 		}

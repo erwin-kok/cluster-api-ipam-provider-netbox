@@ -14,14 +14,14 @@ const (
 	limit = 100
 )
 
-func (c *Client) GatherStatistics(ctx context.Context, pools []*NetboxIPPool) error {
+func (c *client) GatherStatistics(ctx context.Context, pools []*NetboxIPPool) error {
 	offset := 0
 	for _, p := range pools {
 		p.inuse = 0
 	}
 	for {
 		addressList := &IPAddressList{}
-		response, err := c.client.
+		response, err := c.restyClient.
 			R().
 			SetHeader("Accept", "application/json").
 			SetQueryParams(map[string]string{

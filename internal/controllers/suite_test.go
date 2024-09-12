@@ -28,10 +28,10 @@ import (
 	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/ipam"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/komega"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -54,11 +54,11 @@ var (
 	testEnv   *envtest.Environment
 	ctx       context.Context
 	cancel    context.CancelFunc
+	mgr       manager.Manager
 )
 
 func TestControllers(t *testing.T) {
 	RegisterFailHandler(Fail)
-
 	RunSpecs(t, "Controller Suite")
 }
 
@@ -97,7 +97,7 @@ var _ = BeforeSuite(func() {
 
 	// +kubebuilder:scaffold:scheme
 
-	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
+	mgr, err = ctrl.NewManager(cfg, ctrl.Options{
 		Scheme: scheme.Scheme,
 	})
 	Expect(err).ToNot(HaveOccurred())
@@ -108,9 +108,6 @@ var _ = BeforeSuite(func() {
 	Expect(index.SetupIndexes(ctx, mgr)).To(Succeed())
 
 	Expect(ipam.AddIPAddressClaimReconciler(ctx, mgr, "")).To(Succeed())
-
-	Expect(AddNetboxIPPoolReconciler(mgr)).To(Succeed())
-	Expect(AddNetboxGlobalIPPoolReconciler(mgr)).To(Succeed())
 
 	go func() {
 		defer GinkgoRecover()

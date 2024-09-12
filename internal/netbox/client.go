@@ -15,56 +15,37 @@ const (
 	ApiTokenKey = "apiToken"
 )
 
-type NetboxIPPool struct {
-	id       int
-	isPrefix bool
-	display  string
-	vrf      string
-	Range    *ipaddr.SequentialRange[*ipaddr.IPAddress]
-	inuse    int32
+//go:generate mockgen -destination=mock/client.go -package=nbmock . Client
+type Client interface {
+	GetPrefix(ctx context.Context, address string, vrf string) (*NetboxIPPool, error)
+	GetIPRange(ctx context.Context, address string, vrf string) (*NetboxIPPool, error)
+	GatherStatistics(ctx context.Context, pools []*NetboxIPPool) error
+	NextAvailableAddress(ctx context.Context) (*ipaddr.IPAddress, error)
 }
 
-func (p *NetboxIPPool) Total() int32 {
-	return (int32)(p.Range.GetCount().Int64())
+type client struct {
+	api         *netbox.APIClient
+	restyClient *resty.Client
 }
 
-func (p *NetboxIPPool) InUse() int32 {
-	return p.inuse
-}
+var _ Client = &client{}
 
-func (p *NetboxIPPool) Available() int32 {
-	return p.Total() - p.InUse()
-}
-
-func (p *NetboxIPPool) String() string {
-	name := "IPRange"
-	if p.isPrefix {
-		name = "Prefix"
-	}
-	return fmt.Sprintf("%s %s (%d): total %d, inuse: %d, available: %d ", name, p.display, p.id, p.Total(), p.InUse(), p.Available())
-}
-
-type Client struct {
-	api    *netbox.APIClient
-	client *resty.Client
-}
-
-func NewNetBoxClient(host, apiToken string) *Client {
+func NewNetBoxClient(host, apiToken string) Client {
 	api := netbox.NewAPIClientFor(host, apiToken)
-	client := resty.New().
+	restyClient := resty.New().
 		SetBaseURL("http://localhost:8000/api/ipam").
 		SetAuthScheme("Token").
 		SetAuthToken("b1f2db68f235158beea51b0554fc067814221c3a")
-	return &Client{
-		api:    api,
-		client: client,
+	return &client{
+		api:         api,
+		restyClient: restyClient,
 	}
 }
 
-func (c *Client) GetPrefix(ctx context.Context, prefix string, requestedVrf string) (*NetboxIPPool, error) {
+func (c *client) GetPrefix(ctx context.Context, prefix string, requestedVrf string) (*NetboxIPPool, error) {
 	prefixList := &PrefixList{}
 	request :=
-		c.client.
+		c.restyClient.
 			R().
 			SetHeader("Accept", "application/json").
 			SetResult(prefixList).
@@ -108,10 +89,10 @@ func (c *Client) GetPrefix(ctx context.Context, prefix string, requestedVrf stri
 	}, nil
 }
 
-func (c *Client) GetIPRange(ctx context.Context, startAddress string, requestedVrf string) (*NetboxIPPool, error) {
+func (c *client) GetIPRange(ctx context.Context, startAddress string, requestedVrf string) (*NetboxIPPool, error) {
 	ipRangeList := &IPRangeList{}
 	request :=
-		c.client.
+		c.restyClient.
 			R().
 			SetHeader("Accept", "application/json").
 			SetResult(ipRangeList).
@@ -153,10 +134,10 @@ func (c *Client) GetIPRange(ctx context.Context, startAddress string, requestedV
 	}, nil
 }
 
-func (c *Client) NextAvailableAddress(ctx context.Context) (*ipaddr.IPAddress, error) {
+func (c *client) NextAvailableAddress(ctx context.Context) (*ipaddr.IPAddress, error) {
 	prefix := &PrefixRequest{}
 	request :=
-		c.client.
+		c.restyClient.
 			R().
 			SetHeader("Accept", "application/json").
 			SetResult(prefix).

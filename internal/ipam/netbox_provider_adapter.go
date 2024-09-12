@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/index"
+	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/logger"
 	poolutil "github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/pool"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -37,7 +38,7 @@ var _ ProviderAdapter = &NetboxProviderAdapter{}
 type IPAddressClaimHandler struct {
 	client.Client
 	claim *ipamv1.IPAddressClaim
-	pool  ipamv1alpha1.GenericNetboxPool
+	pool  *ipamv1alpha1.NetboxIPPool
 }
 
 var _ ClaimHandler = &IPAddressClaimHandler{}
@@ -50,10 +51,6 @@ func (a *NetboxProviderAdapter) SetupWithManager(_ context.Context, b *ctrl.Buil
 					Group: ipamv1alpha1.GroupVersion.Group,
 					Kind:  ipamv1alpha1.NetboxIPPoolKind,
 				}),
-				ClaimReferencesPoolKind(metav1.GroupKind{
-					Group: ipamv1alpha1.GroupVersion.Group,
-					Kind:  ipamv1alpha1.NetboxIPGlobalPoolKind,
-				}),
 			),
 		)).
 		WithOptions(controller.Options{
@@ -62,15 +59,7 @@ func (a *NetboxProviderAdapter) SetupWithManager(_ context.Context, b *ctrl.Buil
 		}).
 		Watches(
 			&ipamv1alpha1.NetboxIPPool{},
-			handler.EnqueueRequestsFromMapFunc(a.netboxPoolToIPClaims("NetboxPrefixPool")),
-			builder.WithPredicates(predicate.Or(
-				resourceTransitionedToUnpaused(),
-				poolNoLongerEmpty(),
-			)),
-		).
-		Watches(
-			&ipamv1alpha1.NetboxGlobalIPPool{},
-			handler.EnqueueRequestsFromMapFunc(a.netboxPoolToIPClaims("NetboxPrefixGlobalPool")),
+			handler.EnqueueRequestsFromMapFunc(a.netboxPoolToIPClaims()),
 			builder.WithPredicates(predicate.Or(
 				resourceTransitionedToUnpaused(),
 				poolNoLongerEmpty(),
@@ -81,16 +70,16 @@ func (a *NetboxProviderAdapter) SetupWithManager(_ context.Context, b *ctrl.Buil
 	return nil
 }
 
-func (i *NetboxProviderAdapter) netboxPoolToIPClaims(kind string) func(context.Context, client.Object) []reconcile.Request {
+func (i *NetboxProviderAdapter) netboxPoolToIPClaims() func(context.Context, client.Object) []reconcile.Request {
 	return func(ctx context.Context, obj client.Object) []reconcile.Request {
-		pool := obj.(ipamv1alpha1.GenericNetboxPool)
+		pool := obj.(*ipamv1alpha1.NetboxIPPool)
 		requests := []reconcile.Request{}
 		claims := &ipamv1.IPAddressClaimList{}
 		err := i.Client.List(ctx, claims,
 			client.MatchingFields{
 				"index.poolRef": index.IPPoolRefValue(corev1.TypedLocalObjectReference{
 					Name:     pool.GetName(),
-					Kind:     kind,
+					Kind:     ipamv1alpha1.NetboxIPPoolKind,
 					APIGroup: &ipamv1alpha1.GroupVersion.Group,
 				}),
 			},
@@ -133,7 +122,7 @@ func (a *NetboxProviderAdapter) ClaimHandlerFor(_ client.Client, claim *ipamv1.I
 
 // FetchPool fetches the (Global)InClusterIPPool.
 func (h *IPAddressClaimHandler) FetchPool(ctx context.Context) (client.Object, *ctrl.Result, error) {
-	log := ctrl.LoggerFrom(ctx)
+	log := logger.FromContext(ctx)
 
 	if h.claim.Spec.PoolRef.Kind == ipamv1alpha1.NetboxIPPoolKind {
 		icippool := &ipamv1alpha1.NetboxIPPool{}
@@ -141,12 +130,6 @@ func (h *IPAddressClaimHandler) FetchPool(ctx context.Context) (client.Object, *
 			return nil, nil, errors.Wrap(err, "failed to fetch pool")
 		}
 		h.pool = icippool
-	} else if h.claim.Spec.PoolRef.Kind == ipamv1alpha1.NetboxIPGlobalPoolKind {
-		gicippool := &ipamv1alpha1.NetboxGlobalIPPool{}
-		if err := h.Client.Get(ctx, types.NamespacedName{Name: h.claim.Spec.PoolRef.Name}, gicippool); err != nil {
-			return nil, nil, err
-		}
-		h.pool = gicippool
 	}
 
 	if h.pool == nil {
@@ -205,11 +188,11 @@ func resourceTransitionedToUnpaused() predicate.Predicate {
 }
 
 func poolStatus(o client.Object) *ipamv1alpha1.NetboxPoolStatusIPAddresses {
-	pool, ok := o.(ipamv1alpha1.GenericNetboxPool)
+	pool, ok := o.(*ipamv1alpha1.NetboxIPPool)
 	if !ok {
 		return nil
 	}
-	return pool.PoolStatus().Addresses
+	return pool.Status.Addresses
 }
 
 // poolNoLongerEmpty only returns true if the Pool status previously had 0 free

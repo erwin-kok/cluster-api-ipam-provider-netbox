@@ -54,7 +54,7 @@ var _ = Describe("NetboxIPRangeGlobalPool Webhook", func() {
 				WithIndex(&ipamv1.IPAddress{}, index.IPAddressPoolRefCombinedField, index.IPAddressByCombinedPoolRef).
 				Build()
 
-			webhook := NetboxIPPool{
+			webhook := WebhookNetboxIPPool{
 				Client: fakeClient,
 			}
 
