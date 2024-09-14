@@ -43,8 +43,8 @@ import (
 	controllers "github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/controllers"
 	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/index"
 	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/logger"
-	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/netbox"
 	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/webhooks"
+	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/pkg/netbox"
 	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/version"
 	// +kubebuilder:scaffold:imports
 )

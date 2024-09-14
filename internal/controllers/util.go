@@ -4,7 +4,7 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 
-	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/netbox"
+	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/pkg/netbox"
 )
 
 const (

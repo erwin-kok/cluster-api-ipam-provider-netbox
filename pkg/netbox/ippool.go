@@ -32,5 +32,6 @@ func (p *NetboxIPPool) String() string {
 	if p.isPrefix {
 		name = "Prefix"
 	}
-	return fmt.Sprintf("%s %s (%d): total %d, inuse: %d, available: %d ", name, p.display, p.id, p.Total(), p.InUse(), p.Available())
+	return fmt.Sprintf("%s %s (%d): total %d, inuse: %d, available: %d ",
+		name, p.display, p.id, p.Total(), p.InUse(), p.Available())
 }

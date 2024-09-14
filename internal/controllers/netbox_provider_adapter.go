@@ -15,8 +15,8 @@ import (
 
 	ipamv1alpha1 "github.com/erwin-kok/cluster-api-ipam-provider-netbox/api/v1alpha1"
 	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/logger"
-	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/netbox"
 	ipampredicates "github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/predicates"
+	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/pkg/netbox"
 )
 
 // NetboxProviderAdapter is used as middle layer for provider integration.

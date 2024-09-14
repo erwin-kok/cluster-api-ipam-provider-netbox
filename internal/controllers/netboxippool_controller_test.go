@@ -32,8 +32,8 @@ import (
 	. "sigs.k8s.io/controller-runtime/pkg/envtest/komega"
 
 	ipamv1alpha1 "github.com/erwin-kok/cluster-api-ipam-provider-netbox/api/v1alpha1"
-	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/netbox"
-	nbmock "github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/netbox/mock"
+	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/pkg/netbox"
+	nbmock "github.com/erwin-kok/cluster-api-ipam-provider-netbox/pkg/netbox/mock"
 )
 
 var _ = Describe("NetboxIPPool Controller", func() {

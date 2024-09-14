@@ -137,7 +137,6 @@ release: clean-release
 	@if [ -z "${RELEASE_TAG}" ]; then echo "RELEASE_TAG is not set"; exit 1; fi
 	@if ! [ -z "$$(git status --porcelain)" ]; then echo "Your local git repository contains uncommitted changes, use git clean before proceeding."; exit 1; fi
 	$(MAKE) release-manifests
-	$(MAKE) release-metadata
 
 .PHONY: clean-release
 clean-release:

@@ -113,7 +113,8 @@ func (c *client) GetIPRange(ctx context.Context, startAddress string, requestedV
 		return nil, fmt.Errorf("no ip-range matches start startAddress '%s'", startAddress)
 	}
 	if len(filteredResults) != 1 {
-		return nil, fmt.Errorf("multiple ip-ranges matches start startAddress '%s', there must be only one match", startAddress)
+		return nil, fmt.Errorf("multiple ip-ranges matches start startAddress '%s',"+
+			"there must be only one match", startAddress)
 	}
 
 	result := filteredResults[0]

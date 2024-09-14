@@ -43,8 +43,8 @@ import (
 
 	ipamv1alpha1 "github.com/erwin-kok/cluster-api-ipam-provider-netbox/api/v1alpha1"
 	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/logger"
-	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/netbox"
 	poolutil "github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/pool"
+	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/pkg/netbox"
 )
 
 const (
