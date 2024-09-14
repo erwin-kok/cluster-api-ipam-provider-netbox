@@ -7,7 +7,6 @@
 [![GoDoc](https://pkg.go.dev/badge/github.com/erwin-kok/cluster-api-ipam-provider-netbox)](https://pkg.go.dev/github.com/erwin-kok/cluster-api-ipam-provider-netbox)
 [![License](https://img.shields.io/github/license/erwin-kok/cluster-api-ipam-provider-netbox.svg)](https://github.com/erwin-kok/cluster-api-ipam-provider-netbox/blob/master/LICENSE)
 
-
 ## What is the Cluster API IPAM Provider Netbox
 
 This is an [IPAM provider](https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/proposals/20220125-ipam-integration.md#ipam-provider) for [Cluster API](https://github.com/kubernetes-sigs/cluster-api) that manages pools of IP addresses
@@ -23,5 +22,3 @@ Since the implementation is far from complete, do not use this in production yet
 ## Features
 
 TODO
-
-[![](https://visitcount.itsvg.in/api?id=erwinkok&label=Profile%20Views&color=6&icon=0&pretty=false)](https://visitcount.itsvg.in)
