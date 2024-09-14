@@ -24,11 +24,11 @@ import (
 	"os"
 	"time"
 
-	nb "github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/netbox"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"sigs.k8s.io/cluster-api-ipam-provider-in-cluster/pkg/ipamutil"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -42,8 +42,8 @@ import (
 	ipamv1alpha1 "github.com/erwin-kok/cluster-api-ipam-provider-netbox/api/v1alpha1"
 	controllers "github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/controllers"
 	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/index"
-	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/ipam"
 	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/logger"
+	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/netbox"
 	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/webhooks"
 	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/version"
 	// +kubebuilder:scaffold:imports
@@ -65,7 +65,7 @@ func init() {
 func main() {
 	fmt.Printf("Version: %s\n", version.Get().String())
 
-	nbclient := nb.NewNetBoxClient("http://localhost:8000", "b1f2db68f235158beea51b0554fc067814221c3a")
+	nbclient := netbox.NewNetBoxClient("http://localhost:8000", "b1f2db68f235158beea51b0554fc067814221c3a")
 	ctx1 := context.Background()
 	iprange, err := nbclient.GetIPRange(ctx1, "10.0.0.1/24", "")
 	if err != nil {
@@ -80,7 +80,7 @@ func main() {
 	}
 
 	start := time.Now()
-	_ = nbclient.GatherStatistics(ctx1, []*nb.NetboxIPPool{prefix, iprange})
+	_ = nbclient.GatherStatistics(ctx1, []*netbox.NetboxIPPool{prefix, iprange})
 
 	fmt.Println(prefix)
 	fmt.Println(iprange)
@@ -115,7 +115,8 @@ func main() {
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.StringVar(&watchNamespace, "namespace", "",
-		"Namespace that the controller watches to reconcile cluster-api objects. If unspecified, the controller watches for cluster-api objects across all namespaces.")
+		"Namespace that the controller watches to reconcile cluster-api objects. "+
+			"If unspecified, the controller watches for cluster-api objects across all namespaces.")
 	flag.StringVar(&watchFilter, "watch-filter", "", "")
 
 	flag.BoolVar(&secureMetrics, "metrics-secure", true,
@@ -191,7 +192,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := ipam.AddIPAddressClaimReconciler(ctx, mgr, watchFilter); err != nil {
+	if err = (&ipamutil.ClaimReconciler{
+		Client:           mgr.GetClient(),
+		Scheme:           mgr.GetScheme(),
+		WatchFilterValue: watchFilter,
+		Adapter: &controllers.NetboxProviderAdapter{
+			NetboxServiceFactory: func(url, apiToken string) (netbox.Client, error) {
+				return netbox.NewNetBoxClient(url, apiToken), nil
+			},
+		},
+	}).SetupWithManager(ctx, mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "IPAddressClaim")
 		os.Exit(1)
 	}
@@ -205,7 +215,7 @@ func main() {
 	}
 
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
-		if err = (&webhooks.WebhookNetboxIPPool{}).SetupWebhookWithManager(mgr); err != nil {
+		if err = (&webhooks.NetboxIPPoolWebhook{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "NetboxIPPool")
 			os.Exit(1)
 		}

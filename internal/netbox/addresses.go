@@ -49,7 +49,7 @@ func (c *client) GatherStatistics(ctx context.Context, pools []*NetboxIPPool) er
 				}
 			}
 
-			// addr := ipaddr.NewIPAddressString(a.Address).GetAddress().ToPrefixBlock()
+			// addr := ipaddr.NewIPAddressString(a.CIDR).GetAddress().ToPrefixBlock()
 			//
 			// lower := ipaddr.NewIPAddressString("10.0.0.1/24").GetAddress()
 			// upper := ipaddr.NewIPAddressString("10.0.50.10/24").GetAddress()

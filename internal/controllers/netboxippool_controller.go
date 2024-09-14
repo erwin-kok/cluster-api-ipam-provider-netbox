@@ -56,7 +56,7 @@ const (
 type NetboxIPPoolReconciler struct {
 	client.Client
 	Scheme               *runtime.Scheme
-	netboxServiceFactory func(host, apiToken string) netbox.Client
+	netboxServiceFactory func(url, apiToken string) (netbox.Client, error)
 }
 
 func (r *NetboxIPPoolReconciler) SetupWithManager(mgr manager.Manager) error {
@@ -73,13 +73,6 @@ func (r *NetboxIPPoolReconciler) SetupWithManager(mgr manager.Manager) error {
 			}),
 		).
 		Complete(r)
-}
-
-func (r *NetboxIPPoolReconciler) getNetboxService(host, apiToken string) netbox.Client {
-	if r.netboxServiceFactory != nil {
-		return r.netboxServiceFactory(host, apiToken)
-	}
-	return netbox.NewNetBoxClient(host, apiToken)
 }
 
 // +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=netboxippools,verbs=get;list;watch;create;update;patch;delete
@@ -138,7 +131,7 @@ func (r *NetboxIPPoolReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	return r.reconcileNormal(ctx, pool, addressesInUse)
 }
 
-func (r *NetboxIPPoolReconciler) reconcileDelete(ctx context.Context, pool *ipamv1alpha1.NetboxIPPool, addressesInUse []ipamv1.IPAddress) (reconcile.Result, error) {
+func (r *NetboxIPPoolReconciler) reconcileDelete(ctx context.Context, pool *ipamv1alpha1.NetboxIPPool, addressesInUse []ipamv1.IPAddress) (reconcile.Result, error) { //nolint:unparam
 	log := logger.FromContext(ctx)
 
 	if len(addressesInUse) > 0 {
@@ -159,7 +152,7 @@ func (r *NetboxIPPoolReconciler) reconcileDelete(ctx context.Context, pool *ipam
 	return reconcile.Result{}, nil
 }
 
-func (r *NetboxIPPoolReconciler) reconcileNormal(ctx context.Context, pool *ipamv1alpha1.NetboxIPPool, addressesInUse []ipamv1.IPAddress) (reconcile.Result, error) {
+func (r *NetboxIPPoolReconciler) reconcileNormal(ctx context.Context, pool *ipamv1alpha1.NetboxIPPool, addressesInUse []ipamv1.IPAddress) (reconcile.Result, error) { //nolint:unparam
 	log := logger.FromContext(ctx)
 
 	secret, err := r.reconcileNormalCredentialsSecret(ctx, pool)
@@ -291,35 +284,19 @@ func (r *NetboxIPPoolReconciler) getCredentialsRef(ctx context.Context, pool *ip
 }
 
 func (r *NetboxIPPoolReconciler) getNetboxIPPool(ctx context.Context, secret *corev1.Secret, pool *ipamv1alpha1.NetboxIPPool) (*netbox.NetboxIPPool, error) {
-	url := getData(secret, netbox.UrlKey)
-	if url != "" {
-		return nil, errors.New("can not connect to Netbox, secret must contain url")
+	nb, err := getNetboxClient(secret, r.netboxServiceFactory)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not create Netbox client")
 	}
-	apiToken := getData(secret, netbox.ApiTokenKey)
-	if url != "" {
-		return nil, errors.New("can not connect to Netbox, secret must contain apiToken")
-	}
-
-	nb := r.getNetboxService(url, apiToken)
 
 	switch pool.Spec.Type {
 	case ipamv1alpha1.PrefixType:
-		return nb.GetPrefix(ctx, pool.Spec.Address, pool.Spec.Vrf)
+		return nb.GetPrefix(ctx, pool.Spec.CIDR, pool.Spec.Vrf)
 
 	case ipamv1alpha1.IPRangeType:
-		return nb.GetIPRange(ctx, pool.Spec.Address, pool.Spec.Vrf)
+		return nb.GetIPRange(ctx, pool.Spec.CIDR, pool.Spec.Vrf)
 	}
 	return nil, errors.New(fmt.Sprintf("unknown IPPoolType %s", pool.Spec.Type))
-}
-
-func getData(secret *corev1.Secret, key string) string {
-	if secret.Data == nil {
-		return ""
-	}
-	if val, ok := secret.Data[key]; ok {
-		return string(val)
-	}
-	return ""
 }
 
 func ipAddressToNetboxIPPool(ipAddress *ipamv1.IPAddress) []reconcile.Request {

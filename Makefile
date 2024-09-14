@@ -1,5 +1,5 @@
 # Image URL to use all building/pushing image targets
-IMG ?= controller:latest
+IMG ?= ghcr.io/erwin-kok/cluster-api-ipam-provider-netbox
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.30.0
 
@@ -123,6 +123,30 @@ build-installer: manifests generate kustomize ## Generate a consolidated YAML wi
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default > dist/install.yaml
 
+##@ Release
+
+RELEASE_TAG ?= $(shell git describe --tags --abbrev=0 2>/dev/null)
+
+RELEASE_DIR ?= out
+
+$(RELEASE_DIR):
+	mkdir -p $(RELEASE_DIR)/
+
+.PHONY: release
+release: clean-release
+	@if [ -z "${RELEASE_TAG}" ]; then echo "RELEASE_TAG is not set"; exit 1; fi
+	@if ! [ -z "$$(git status --porcelain)" ]; then echo "Your local git repository contains uncommitted changes, use git clean before proceeding."; exit 1; fi
+	$(MAKE) release-manifests
+	$(MAKE) release-metadata
+
+.PHONY: clean-release
+clean-release:
+	rm -rf $(RELEASE_DIR)
+
+.PHONY: release-manifests
+release-manifests: kustomize $(RELEASE_DIR)
+	$(KUSTOMIZE) build config/default > $(RELEASE_DIR)/ipam-components.yaml
+
 ##@ Deployment
 
 ifndef ignore-not-found
@@ -162,8 +186,8 @@ GOLANGCI_LINT = $(LOCALBIN)/golangci-lint
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.4.2
-CONTROLLER_TOOLS_VERSION ?= v0.15.0
-ENVTEST_VERSION ?= release-0.18
+CONTROLLER_TOOLS_VERSION ?= v0.16.3
+ENVTEST_VERSION ?= release-0.19
 GOLANGCI_LINT_VERSION ?= v1.59.1
 
 .PHONY: kustomize

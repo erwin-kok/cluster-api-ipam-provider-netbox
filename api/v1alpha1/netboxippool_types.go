@@ -38,10 +38,10 @@ type NetboxIPPoolSpec struct {
 	// +kubebuilder:validation:Enum=Prefix;IPRange
 	Type NetboxPoolType `json:"type"`
 
-	// Depending on the type, an Address is either the prefix or the start address of an ip-range, in CIDR notation.
-	Address string `json:"address"`
+	// Depending on the type, an CIDR is either the prefix or the start address of an ip-range, in CIDR notation.
+	CIDR string `json:"cidr"`
 
-	// Vrf where the Address is part of. If not provided, the "Global" Vrf is used.
+	// Vrf where the CIDR is part of. If not provided, the "Global" Vrf is used.
 	// +optional
 	Vrf string `json:"vrf,omitempty"`
 
@@ -84,6 +84,7 @@ type NetboxPoolStatusIPAddresses struct {
 // +kubebuilder:printcolumn:name="Total",type="integer",JSONPath=".status.ipAddresses.total",description="Count of IPs configured for the pool"
 // +kubebuilder:printcolumn:name="Free",type="integer",JSONPath=".status.ipAddresses.free",description="Count of unallocated IPs in the pool"
 // +kubebuilder:printcolumn:name="Used",type="integer",JSONPath=".status.ipAddresses.used",description="Count of allocated IPs in the pool"
+// +k8s:defaulter-gen=true
 
 // NetboxIPPool is the Schema for the netboxippools API
 type NetboxIPPool struct {

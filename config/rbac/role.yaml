@@ -26,14 +26,8 @@ rules:
   - ipam.cluster.x-k8s.io
   resources:
   - ipaddressclaims/status
-  - ipaddresses/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - ipam.cluster.x-k8s.io
-  resources:
-  - ipaddressclaims/status
   - ipaddresses/status
+  - netboxippools/status
   verbs:
   - get
   - patch
@@ -42,43 +36,6 @@ rules:
   - ipam.cluster.x-k8s.io
   resources:
   - ipaddresses
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ipam.cluster.x-k8s.io
-  resources:
-  - netboxglobalippools
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ipam.cluster.x-k8s.io
-  resources:
-  - netboxglobalippools/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - ipam.cluster.x-k8s.io
-  resources:
-  - netboxglobalippools/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - ipam.cluster.x-k8s.io
-  resources:
   - netboxippools
   verbs:
   - create
@@ -91,14 +48,7 @@ rules:
 - apiGroups:
   - ipam.cluster.x-k8s.io
   resources:
+  - ipaddresses/finalizers
   - netboxippools/finalizers
   verbs:
-  - update
-- apiGroups:
-  - ipam.cluster.x-k8s.io
-  resources:
-  - netboxippools/status
-  verbs:
-  - get
-  - patch
   - update

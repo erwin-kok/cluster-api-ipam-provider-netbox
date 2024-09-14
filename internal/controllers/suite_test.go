@@ -24,8 +24,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/index"
-	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/ipam"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/komega"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -42,6 +40,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	ipamv1alpha1 "github.com/erwin-kok/cluster-api-ipam-provider-netbox/api/v1alpha1"
+	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/index"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -61,6 +60,21 @@ func TestControllers(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Controller Suite")
 }
+
+// func TestMain(m *testing.M) {
+// 	setup()
+// 	defer teardown()
+// 	m.Run()
+// }
+//
+// func setup() {
+//
+// }
+//
+// func teardown() {
+//
+// }
+//
 
 var _ = BeforeSuite(func() {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
@@ -106,8 +120,6 @@ var _ = BeforeSuite(func() {
 	komega.SetClient(mgr.GetClient())
 
 	Expect(index.SetupIndexes(ctx, mgr)).To(Succeed())
-
-	Expect(ipam.AddIPAddressClaimReconciler(ctx, mgr, "")).To(Succeed())
 
 	go func() {
 		defer GinkgoRecover()

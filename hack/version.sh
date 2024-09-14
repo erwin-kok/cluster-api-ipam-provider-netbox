@@ -68,7 +68,7 @@ version::ldflags() {
         local key=${1}
         local val=${2}
         ldflags+=(
-            "-X 'github.com/telekom/cluster-api-ipam-provider-infoblox/version.${key}=${val}'"
+            "-X 'github.com/erwin-kok/cluster-api-ipam-provider-netbox/version.${key}=${val}'"
         )
     }
 

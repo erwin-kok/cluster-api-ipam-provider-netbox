@@ -10,11 +10,6 @@ import (
 	"github.com/seancfoley/ipaddress-go/ipaddr"
 )
 
-const (
-	UrlKey      = "url"
-	ApiTokenKey = "apiToken"
-)
-
 //go:generate mockgen -destination=mock/client.go -package=nbmock . Client
 type Client interface {
 	GetPrefix(ctx context.Context, address string, vrf string) (*NetboxIPPool, error)
@@ -30,8 +25,8 @@ type client struct {
 
 var _ Client = &client{}
 
-func NewNetBoxClient(host, apiToken string) Client {
-	api := netbox.NewAPIClientFor(host, apiToken)
+func NewNetBoxClient(url, apiToken string) Client {
+	api := netbox.NewAPIClientFor(url, apiToken)
 	restyClient := resty.New().
 		SetBaseURL("http://localhost:8000/api/ipam").
 		SetAuthScheme("Token").
