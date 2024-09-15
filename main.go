@@ -17,12 +17,9 @@ limitations under the License.
 package main
 
 import (
-	"context"
 	"crypto/tls"
 	"flag"
-	"fmt"
 	"os"
-	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -63,40 +60,6 @@ func init() {
 }
 
 func main() {
-	fmt.Printf("Version: %s\n", version.Get().String())
-
-	nbclient := netbox.NewNetBoxClient("http://localhost:8000", "b1f2db68f235158beea51b0554fc067814221c3a")
-	ctx1 := context.Background()
-	iprange, err := nbclient.GetIPRange(ctx1, "10.0.0.1/24", "")
-	if err != nil {
-		setupLog.Error(err, "unable")
-		os.Exit(1)
-	}
-
-	prefix, err := nbclient.GetPrefix(ctx1, "30.10.0.0/16", "TestVRF")
-	if err != nil {
-		setupLog.Error(err, "unable")
-		os.Exit(1)
-	}
-
-	start := time.Now()
-	_ = nbclient.GatherStatistics(ctx1, []*netbox.NetboxIPPool{prefix, iprange})
-
-	fmt.Println(prefix)
-	fmt.Println(iprange)
-
-	fmt.Printf("took %v\n", time.Since(start))
-
-	ipAddress, err := nbclient.NextAvailableAddress(ctx1)
-	if err != nil {
-		setupLog.Error(err, "unable")
-		os.Exit(1)
-	}
-
-	fmt.Println(ipAddress)
-
-	/* ****** */
-
 	var (
 		metricsAddr          string
 		enableLeaderElection bool
