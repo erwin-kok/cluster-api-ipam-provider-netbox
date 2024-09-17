@@ -166,14 +166,14 @@ func (r *NetboxIPPoolReconciler) reconcileNormal(ctx context.Context, pool *ipam
 		return ctrl.Result{}, errors.Wrap(err, "failed to get Netbox IPPool")
 	}
 
-	poolCount := (int)(netboxIPPool.Range.GetCount().Int64())
+	poolCount := netboxIPPool.GetCount()
 	if pool.Spec.Gateway != "" {
 		gatewayAddress, err := ipaddr.NewIPAddressString(pool.Spec.Gateway).ToAddress()
 		if err != nil {
 			return ctrl.Result{}, errors.Wrap(err, "failed to parse pool gateway")
 		}
 
-		if netboxIPPool.Range.Contains(gatewayAddress) {
+		if netboxIPPool.Contains(gatewayAddress) {
 			poolCount--
 		}
 	}
@@ -187,13 +187,16 @@ func (r *NetboxIPPoolReconciler) reconcileNormal(ctx context.Context, pool *ipam
 		Free:  free,
 	}
 
+	pool.Status.NetboxId = netboxIPPool.Id
+	pool.Status.NetboxType = (string)(netboxIPPool.Type)
+
 	log.Info("Updating pool with usage info", "statusAddresses", pool.Status.Addresses)
 
 	return ctrl.Result{}, nil
 }
 
 func (r *NetboxIPPoolReconciler) reconcileNormalCredentialsSecret(ctx context.Context, pool *ipamv1alpha1.NetboxIPPool) (*corev1.Secret, error) {
-	secret, err := r.getCredentialsRef(ctx, pool)
+	secret, err := getSecretForPool(ctx, r.Client, pool)
 	if err != nil {
 		return nil, err
 	}
@@ -227,7 +230,7 @@ func (r *NetboxIPPoolReconciler) reconcileNormalCredentialsSecret(ctx context.Co
 }
 
 func (r *NetboxIPPoolReconciler) reconcileDeleteCredentialsSecret(ctx context.Context, pool *ipamv1alpha1.NetboxIPPool) error {
-	secret, err := r.getCredentialsRef(ctx, pool)
+	secret, err := getSecretForPool(ctx, r.Client, pool)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return nil
@@ -258,29 +261,6 @@ func (r *NetboxIPPoolReconciler) reconcileDeleteCredentialsSecret(ctx context.Co
 	}
 
 	return helper.Patch(ctx, secret)
-}
-
-func (r *NetboxIPPoolReconciler) getCredentialsRef(ctx context.Context, pool *ipamv1alpha1.NetboxIPPool) (*corev1.Secret, error) {
-	credRef := pool.Spec.CredentialsRef
-	if credRef == nil {
-		return nil, errors.New("pool does not has a CredentialsRef")
-	}
-
-	namespace := credRef.Namespace
-	if len(namespace) == 0 {
-		namespace = pool.GetNamespace()
-	}
-
-	secret := &corev1.Secret{}
-	secretKey := client.ObjectKey{
-		Namespace: namespace,
-		Name:      credRef.Name,
-	}
-	err := r.Client.Get(ctx, secretKey, secret)
-	if err != nil {
-		return nil, err
-	}
-	return secret, nil
 }
 
 func (r *NetboxIPPoolReconciler) getNetboxIPPool(ctx context.Context, secret *corev1.Secret, pool *ipamv1alpha1.NetboxIPPool) (*netbox.NetboxIPPool, error) {

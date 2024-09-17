@@ -2,12 +2,15 @@ package controller
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/cluster-api-ipam-provider-in-cluster/pkg/ipamutil"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util/conditions"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -95,6 +98,45 @@ func (h *IPAddressClaimHandler) FetchPool(ctx context.Context) (client.Object, *
 
 // EnsureAddress ensures that the IPAddress contains a valid address.
 func (h *IPAddressClaimHandler) EnsureAddress(ctx context.Context, address *ipamv1.IPAddress) (*ctrl.Result, error) {
+	log := logger.FromContext(ctx)
+
+	secret, err := getSecretForPool(ctx, h.Client, h.pool)
+	if err != nil {
+		log.Error(err, "could not get secret")
+		conditions.MarkFalse(h.claim,
+			clusterv1.ReadyCondition,
+			ipamv1.AllocationFailedReason,
+			clusterv1.ConditionSeverityError,
+			"could not allocate address: %s", err)
+		return &ctrl.Result{}, fmt.Errorf("unable to ensure address: %w", err)
+	}
+
+	netboxClient, err := getNetboxClient(secret, h.netboxServiceFactory)
+	if err != nil {
+		log.Error(err, "could not get netbox client")
+		conditions.MarkFalse(h.claim,
+			clusterv1.ReadyCondition,
+			ipamv1.AllocationFailedReason,
+			clusterv1.ConditionSeverityError,
+			"could not allocate address: %s", err)
+		return &ctrl.Result{}, fmt.Errorf("unable to ensure address: %w", err)
+	}
+
+	ipAddress, err := netboxClient.NextAvailablePrefixAddress(ctx)
+	if err != nil {
+		log.Error(err, "could not get netbox client")
+		conditions.MarkFalse(h.claim,
+			clusterv1.ReadyCondition,
+			ipamv1.AllocationFailedReason,
+			clusterv1.ConditionSeverityError,
+			"could not allocate address: %s", err)
+		return &ctrl.Result{}, fmt.Errorf("unable to ensure address: %w", err)
+	}
+
+	address.Spec.Address = ipAddress.String()
+	address.Spec.Prefix = ipAddress.GetNetworkPrefixLen().Len()
+	address.Spec.Gateway = h.pool.Spec.Gateway
+
 	return nil, nil
 }
 

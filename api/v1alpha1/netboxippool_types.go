@@ -59,6 +59,14 @@ type NetboxIPPoolStatus struct {
 	// Addresses reports the count of total, free, and used IPs in the pool.
 	// +optional
 	Addresses *NetboxPoolStatusIPAddresses `json:"ipAddresses,omitempty"`
+
+	// NetboxId is the Id in Netbox.
+	// +optional
+	NetboxId int `json:"netboxId,omitempty"`
+
+	// NetboxType is the Type in Netbox.
+	// +optional
+	NetboxType string `json:"netboxType,omitempty"`
 }
 
 // NetboxPoolStatusIPAddresses contains the count of total, free, and used IPs in a pool.

@@ -15,7 +15,8 @@ type Client interface {
 	GetPrefix(ctx context.Context, address string, vrf string) (*NetboxIPPool, error)
 	GetIPRange(ctx context.Context, address string, vrf string) (*NetboxIPPool, error)
 	GatherStatistics(ctx context.Context, pools []*NetboxIPPool) error
-	NextAvailableAddress(ctx context.Context) (*ipaddr.IPAddress, error)
+	NextAvailablePrefixAddress(ctx context.Context) (*ipaddr.IPAddress, error)
+	NextAvailableIPRangeAddress(ctx context.Context) (*ipaddr.IPAddress, error)
 }
 
 type client struct {
@@ -76,11 +77,11 @@ func (c *client) GetPrefix(ctx context.Context, prefix string, requestedVrf stri
 	}
 
 	return &NetboxIPPool{
-		id:       result.Id,
-		isPrefix: true,
-		display:  result.Display,
-		vrf:      result.Vrf.Name,
-		Range:    cidr.ToSequentialRange(),
+		Id:      result.Id,
+		Type:    PrefixPoolType,
+		Display: result.Display,
+		Vrf:     result.Vrf.Name,
+		Range:   cidr.ToSequentialRange(),
 	}, nil
 }
 
@@ -118,19 +119,26 @@ func (c *client) GetIPRange(ctx context.Context, startAddress string, requestedV
 	}
 
 	result := filteredResults[0]
-	lower := ipaddr.NewIPAddressString(result.StartAddress).GetAddress()
-	upper := ipaddr.NewIPAddressString(result.EndAddress).GetAddress()
+	lower, err := ipaddr.NewIPAddressString(result.StartAddress).ToAddress()
+	if err != nil {
+		return nil, errors.Wrap(err, fmt.Sprintf("could not parse startAddress '%s'", result.StartAddress))
+	}
+
+	upper, err := ipaddr.NewIPAddressString(result.EndAddress).ToAddress()
+	if err != nil {
+		return nil, errors.Wrap(err, fmt.Sprintf("could not parse endAddress '%s'", result.EndAddress))
+	}
 
 	return &NetboxIPPool{
-		id:       result.Id,
-		isPrefix: false,
-		display:  result.Display,
-		vrf:      result.Vrf.Name,
-		Range:    lower.SpanWithRange(upper),
+		Id:      result.Id,
+		Type:    IPRangePoolType,
+		Display: result.Display,
+		Vrf:     result.Vrf.Name,
+		Range:   lower.SpanWithRange(upper),
 	}, nil
 }
 
-func (c *client) NextAvailableAddress(ctx context.Context) (*ipaddr.IPAddress, error) {
+func (c *client) NextAvailablePrefixAddress(ctx context.Context) (*ipaddr.IPAddress, error) {
 	prefix := &PrefixRequest{}
 	request :=
 		c.restyClient.
@@ -150,4 +158,8 @@ func (c *client) NextAvailableAddress(ctx context.Context) (*ipaddr.IPAddress, e
 		return nil, errors.Wrap(err, fmt.Sprintf("invalid IpAddress %s", prefix.Address))
 	}
 	return ipAddress, nil
+}
+
+func (c *client) NextAvailableIPRangeAddress(ctx context.Context) (*ipaddr.IPAddress, error) {
+	return nil, nil
 }

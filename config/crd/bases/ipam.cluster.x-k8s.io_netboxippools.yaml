@@ -121,6 +121,12 @@ spec:
                 - total
                 - used
                 type: object
+              netboxId:
+                description: NetboxId is the Id in Netbox.
+                type: integer
+              netboxType:
+                description: NetboxType is the Type in Netbox.
+                type: string
             type: object
         type: object
     served: true

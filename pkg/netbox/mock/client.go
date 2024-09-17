@@ -85,17 +85,32 @@ func (mr *MockClientMockRecorder) GetPrefix(arg0, arg1, arg2 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPrefix", reflect.TypeOf((*MockClient)(nil).GetPrefix), arg0, arg1, arg2)
 }
 
-// NextAvailableAddress mocks base method.
-func (m *MockClient) NextAvailableAddress(arg0 context.Context) (*ipaddr.IPAddress, error) {
+// NextAvailableIPRangeAddress mocks base method.
+func (m *MockClient) NextAvailableIPRangeAddress(arg0 context.Context) (*ipaddr.IPAddress, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NextAvailableAddress", arg0)
+	ret := m.ctrl.Call(m, "NextAvailableIPRangeAddress", arg0)
 	ret0, _ := ret[0].(*ipaddr.IPAddress)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// NextAvailableAddress indicates an expected call of NextAvailableAddress.
-func (mr *MockClientMockRecorder) NextAvailableAddress(arg0 any) *gomock.Call {
+// NextAvailableIPRangeAddress indicates an expected call of NextAvailableIPRangeAddress.
+func (mr *MockClientMockRecorder) NextAvailableIPRangeAddress(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NextAvailableAddress", reflect.TypeOf((*MockClient)(nil).NextAvailableAddress), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NextAvailableIPRangeAddress", reflect.TypeOf((*MockClient)(nil).NextAvailableIPRangeAddress), arg0)
+}
+
+// NextAvailablePrefixAddress mocks base method.
+func (m *MockClient) NextAvailablePrefixAddress(arg0 context.Context) (*ipaddr.IPAddress, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NextAvailablePrefixAddress", arg0)
+	ret0, _ := ret[0].(*ipaddr.IPAddress)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// NextAvailablePrefixAddress indicates an expected call of NextAvailablePrefixAddress.
+func (mr *MockClientMockRecorder) NextAvailablePrefixAddress(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NextAvailablePrefixAddress", reflect.TypeOf((*MockClient)(nil).NextAvailablePrefixAddress), arg0)
 }

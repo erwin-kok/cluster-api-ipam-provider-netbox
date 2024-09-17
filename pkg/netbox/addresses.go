@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/erwin-kok/cluster-api-ipam-provider-netbox/internal/logger"
 	"github.com/seancfoley/ipaddress-go/ipaddr"
 
 	"github.com/pkg/errors"
@@ -15,6 +16,8 @@ const (
 )
 
 func (c *client) GatherStatistics(ctx context.Context, pools []*NetboxIPPool) error {
+	log := logger.FromContext(ctx)
+
 	offset := 0
 	for _, p := range pools {
 		p.inuse = 0
@@ -41,33 +44,17 @@ func (c *client) GatherStatistics(ctx context.Context, pools []*NetboxIPPool) er
 			break
 		}
 		for _, a := range addressList.Results {
-			address := ipaddr.NewIPAddressString(a.Address).GetAddress()
+			address, rerr := ipaddr.NewIPAddressString(a.Address).ToAddress()
+			if rerr != nil {
+				log.Error(err, fmt.Sprintf("could not parse ipAddress %s", a.Address))
+				continue
+			}
 			vrf := a.Vrf.Name
 			for _, p := range pools {
-				if vrf == p.vrf && p.Range.Contains(address) {
+				if vrf == p.Vrf && p.Contains(address) {
 					p.inuse++
 				}
 			}
-
-			// addr := ipaddr.NewIPAddressString(a.CIDR).GetAddress().ToPrefixBlock()
-			//
-			// lower := ipaddr.NewIPAddressString("10.0.0.1/24").GetAddress()
-			// upper := ipaddr.NewIPAddressString("10.0.50.10/24").GetAddress()
-			// rng := lower.SpanWithRange(upper)
-			// y := rng.SpanWithPrefixBlocks()
-			// x := rng.GetCount()
-			//
-			// cidr := ipaddr.NewIPAddressString("30.10.0.0/16").GetAddress().ToSequentialRange()
-			//
-			// fmt.Printf("%v", rng.Contains(ipaddr.NewIPAddressString("10.0.0.5").GetAddress()))
-			//
-			// fmt.Printf("%v", y)
-			//
-			// fmt.Printf("%v %v %d %v %v %d", addr, rng, x, y, cidr, len(y))
-			// vrf := ""
-			// if a.Vrf != nil && a.Vrf.Name != nil {
-			//
-			// }
 		}
 		offset += limit
 	}
