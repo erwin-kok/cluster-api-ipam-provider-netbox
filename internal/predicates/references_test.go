@@ -21,7 +21,7 @@ func TestClaimReferencesPoolKind(t *testing.T) {
 			name: "true for valid reference",
 			ref: corev1.TypedLocalObjectReference{
 				APIGroup: ptr.To[string]("ipam.cluster.x-k8s.io"),
-				Kind:     "InfobloxIPPool",
+				Kind:     "NetboxIPPool",
 			},
 			result: true,
 		},
@@ -36,7 +36,7 @@ func TestClaimReferencesPoolKind(t *testing.T) {
 		{
 			name: "false when no group is set",
 			ref: corev1.TypedLocalObjectReference{
-				Kind: "InfobloxIPPool",
+				Kind: "NetboxIPPool",
 			},
 			result: false,
 		},
@@ -44,7 +44,7 @@ func TestClaimReferencesPoolKind(t *testing.T) {
 			name: "false when group does not match",
 			ref: corev1.TypedLocalObjectReference{
 				APIGroup: ptr.To[string]("cluster.x-k8s.io"),
-				Kind:     "InfobloxIPPool",
+				Kind:     "NetboxIPPool",
 			},
 			result: false,
 		},
@@ -52,7 +52,7 @@ func TestClaimReferencesPoolKind(t *testing.T) {
 
 	gk := metav1.GroupKind{
 		Group: "ipam.cluster.x-k8s.io",
-		Kind:  "InfobloxIPPool",
+		Kind:  "NetboxIPPool",
 	}
 
 	for _, tt := range tests {

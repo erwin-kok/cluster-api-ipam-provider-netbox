@@ -65,18 +65,18 @@ var _ = Describe("NetboxIPPool Controller", func() {
 			}
 			Expect(
 				(&NetboxIPPoolReconciler{
-					Client:               mgr.GetClient(),
-					Scheme:               mgr.GetScheme(),
+					Client:               testEnv.GetClient(),
+					Scheme:               testEnv.GetScheme(),
 					netboxServiceFactory: netboxFactory,
-				}).SetupWithManager(mgr)).To(Succeed())
+				}).SetupWithManager(testEnv)).To(Succeed())
 			Expect(
 				(&ipamutil.ClaimReconciler{
-					Client: mgr.GetClient(),
-					Scheme: mgr.GetScheme(),
+					Client: testEnv.GetClient(),
+					Scheme: testEnv.GetScheme(),
 					Adapter: &NetboxProviderAdapter{
 						NetboxServiceFactory: netboxFactory,
 					},
-				}).SetupWithManager(ctx, mgr),
+				}).SetupWithManager(ctx, testEnv),
 			).To(Succeed())
 		})
 
@@ -84,7 +84,7 @@ var _ = Describe("NetboxIPPool Controller", func() {
 			for _, name := range createdClaimNames {
 				deleteClaim(name, namespace)
 			}
-			Expect(k8sClient.Delete(context.Background(), pool)).To(Succeed())
+			Expect(testEnv.Delete(context.Background(), pool)).To(Succeed())
 			mockCtrl.Finish()
 		})
 
@@ -96,7 +96,7 @@ var _ = Describe("NetboxIPPool Controller", func() {
 				)
 
 				pool = newPool(testPool, namespace, credentialSecret, gateway, address)
-				Expect(k8sClient.Create(context.Background(), pool)).To(Succeed())
+				Expect(testEnv.Create(context.Background(), pool)).To(Succeed())
 
 				Eventually(Object(pool)).
 					WithTimeout(5 * time.Second).WithPolling(100 * time.Millisecond).Should(
@@ -107,7 +107,7 @@ var _ = Describe("NetboxIPPool Controller", func() {
 
 				for i := range expectedUsed {
 					claim := newClaim(fmt.Sprintf("test%d", i), namespace, pool.GetName())
-					Expect(k8sClient.Create(context.Background(), &claim)).To(Succeed())
+					Expect(testEnv.Create(context.Background(), &claim)).To(Succeed())
 					createdClaimNames = append(createdClaimNames, claim.Name)
 				}
 
@@ -136,7 +136,7 @@ func createNamespace() string {
 			GenerateName: "test-ns-",
 		},
 	}
-	ExpectWithOffset(1, k8sClient.Create(context.Background(), &namespaceObj)).To(Succeed())
+	ExpectWithOffset(1, testEnv.Create(context.Background(), &namespaceObj)).To(Succeed())
 	return namespaceObj.Name
 }
 
@@ -150,7 +150,7 @@ func createCredentialsSecret(namespace string) *corev1.Secret {
 			"bla": "bla",
 		},
 	}
-	EventuallyWithOffset(1, k8sClient.Create).WithArguments(context.Background(), secret).Should(Succeed())
+	EventuallyWithOffset(1, testEnv.Create).WithArguments(context.Background(), secret).Should(Succeed())
 	return secret
 }
 
@@ -177,7 +177,7 @@ func deleteClaim(name, namespace string) {
 			Namespace: namespace,
 		},
 	}
-	ExpectWithOffset(1, k8sClient.Delete(context.Background(), &claim)).To(Succeed())
+	ExpectWithOffset(1, testEnv.Delete(context.Background(), &claim)).To(Succeed())
 	EventuallyWithOffset(1, Get(&claim)).Should(Not(Succeed()))
 }
 

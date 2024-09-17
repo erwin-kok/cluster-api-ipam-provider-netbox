@@ -7,6 +7,6 @@ spec:
   template:
     spec:
       containers:
-      - image: ghcr.io/telekom/cluster-api-ipam-provider-infoblox:main
+      - image: ghcr.io/erwin-kok/cluster-api-ipam-provider-netbox
         imagePullPolicy: Always
         name: manager
