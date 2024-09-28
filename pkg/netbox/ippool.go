@@ -19,26 +19,22 @@ type NetboxIPPool struct {
 	Display string
 	Vrf     string
 	Range   *ipaddr.SequentialRange[*ipaddr.IPAddress]
-	inuse   int32
+	inuse   int
 }
 
 func (p *NetboxIPPool) Contains(address *ipaddr.IPAddress) bool {
 	return p.Range.Contains(address)
 }
 
-func (p *NetboxIPPool) GetCount() int {
+func (p *NetboxIPPool) Total() int {
 	return (int)(p.Range.GetCount().Int64())
 }
 
-func (p *NetboxIPPool) Total() int32 {
-	return (int32)(p.Range.GetCount().Int64())
-}
-
-func (p *NetboxIPPool) InUse() int32 {
+func (p *NetboxIPPool) InUse() int {
 	return p.inuse
 }
 
-func (p *NetboxIPPool) Available() int32 {
+func (p *NetboxIPPool) Available() int {
 	return p.Total() - p.InUse()
 }
 

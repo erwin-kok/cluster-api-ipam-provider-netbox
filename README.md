@@ -3,7 +3,7 @@
 [![Build Status](https://github.com/erwin-kok/cluster-api-ipam-provider-netbox/actions/workflows/ci.yaml/badge.svg)](https://github.com/erwin-kok/cluster-api-ipam-provider-netbox/actions/workflows/ci.yaml?query=branch%3Amain)
 [![codecov](https://codecov.io/github/erwin-kok/cluster-api-ipam-provider-netbox/branch/main/graph/badge.svg?token=8OFF3L6EUL)](https://codecov.io/github/erwin-kok/cluster-api-ipam-provider-netbox)
 [![Go Report Card](https://goreportcard.com/badge/github.com/erwin-kok/cluster-api-ipam-provider-netbox)](https://goreportcard.com/report/github.com/erwin-kok/cluster-api-ipam-provider-netbox)
-[![Release Version](https://img.shields.io/badge/version-0.0.1-blue.svg)](https://github.com/erwin-kok/cluster-api-ipam-provider-netbox/releases/latest)
+[![Release Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/erwin-kok/cluster-api-ipam-provider-netbox/releases/latest)
 [![GoDoc](https://pkg.go.dev/badge/github.com/erwin-kok/cluster-api-ipam-provider-netbox)](https://pkg.go.dev/github.com/erwin-kok/cluster-api-ipam-provider-netbox)
 [![License](https://img.shields.io/github/license/erwin-kok/cluster-api-ipam-provider-netbox.svg)](https://github.com/erwin-kok/cluster-api-ipam-provider-netbox/blob/master/LICENSE)
 

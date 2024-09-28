@@ -166,7 +166,7 @@ func (r *NetboxIPPoolReconciler) reconcileNormal(ctx context.Context, pool *ipam
 		return ctrl.Result{}, errors.Wrap(err, "failed to get Netbox IPPool")
 	}
 
-	poolCount := netboxIPPool.GetCount()
+	poolCount := netboxIPPool.Total()
 	if pool.Spec.Gateway != "" {
 		gatewayAddress, err := ipaddr.NewIPAddressString(pool.Spec.Gateway).ToAddress()
 		if err != nil {
@@ -179,12 +179,12 @@ func (r *NetboxIPPoolReconciler) reconcileNormal(ctx context.Context, pool *ipam
 	}
 
 	inUseCount := len(addressesInUse)
-	free := poolCount - inUseCount
 
 	pool.Status.Addresses = &ipamv1alpha1.NetboxPoolStatusIPAddresses{
 		Total: poolCount,
-		Used:  inUseCount,
-		Free:  free,
+		Used:  netboxIPPool.InUse(),
+		Free:  netboxIPPool.Available(),
+		Extra: inUseCount,
 	}
 
 	pool.Status.NetboxId = netboxIPPool.Id

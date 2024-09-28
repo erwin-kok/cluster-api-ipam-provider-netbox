@@ -101,6 +101,11 @@ spec:
                 description: Addresses reports the count of total, free, and used
                   IPs in the pool.
                 properties:
+                  extra:
+                    description: |-
+                      Extra is the count of allocated IPs in the pool.
+                      Counts greater than int can contain will report as math.MaxInt.
+                    type: integer
                   free:
                     description: |-
                       Free is the count of unallocated IPs in the pool.
@@ -117,6 +122,7 @@ spec:
                       Counts greater than int can contain will report as math.MaxInt.
                     type: integer
                 required:
+                - extra
                 - free
                 - total
                 - used

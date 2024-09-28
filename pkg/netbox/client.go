@@ -14,7 +14,6 @@ import (
 type Client interface {
 	GetPrefix(ctx context.Context, address string, vrf string) (*NetboxIPPool, error)
 	GetIPRange(ctx context.Context, address string, vrf string) (*NetboxIPPool, error)
-	GatherStatistics(ctx context.Context, pools []*NetboxIPPool) error
 	NextAvailablePrefixAddress(ctx context.Context) (*ipaddr.IPAddress, error)
 	NextAvailableIPRangeAddress(ctx context.Context) (*ipaddr.IPAddress, error)
 }
@@ -22,6 +21,7 @@ type Client interface {
 type client struct {
 	api         *netbox.APIClient
 	restyClient *resty.Client
+	poolFetcher *poolFetcher
 }
 
 var _ Client = &client{}
@@ -35,6 +35,7 @@ func NewNetBoxClient(url, apiToken string) Client {
 	return &client{
 		api:         api,
 		restyClient: restyClient,
+		poolFetcher: newPoolFetcher(),
 	}
 }
 

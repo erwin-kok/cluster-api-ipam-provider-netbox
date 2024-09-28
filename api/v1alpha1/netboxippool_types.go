@@ -82,6 +82,10 @@ type NetboxPoolStatusIPAddresses struct {
 	// Used is the count of allocated IPs in the pool.
 	// Counts greater than int can contain will report as math.MaxInt.
 	Used int `json:"used"`
+
+	// Extra is the count of allocated IPs in the pool.
+	// Counts greater than int can contain will report as math.MaxInt.
+	Extra int `json:"extra"`
 }
 
 // +kubebuilder:object:root=true
